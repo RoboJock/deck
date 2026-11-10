@@ -312,10 +312,14 @@ a {
   margin: 0;
 }
 
+.editor-top .stack {
+  margin-bottom: 16px;
+}
+
 .editor-top {
   display: grid;
-  grid-template-columns: minmax(240px, 340px) minmax(0, 1fr);
-  gap: 36px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
   align-items: start;
   margin: 8px 0 28px;
 }
@@ -477,14 +481,12 @@ h1 {
 
 .card-list .index-card {
   flex: 1;
-  height: 360px;
-  overflow: hidden;
+  min-height: 280px;
+  height: auto;
 }
 
 .card-list .index-card .card-face {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .card-list .index-card .card-photo {
@@ -929,7 +931,8 @@ button.danger-fill {
 }
 
 .card-list.is-horizontal .index-card {
-  height: 240px;
+  min-height: 220px;
+  height: auto;
   aspect-ratio: auto;
 }
 
