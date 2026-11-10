@@ -102,7 +102,7 @@ export function DecksPage() {
                 <span className="status">{deck.detail}</span>
                 <div className="row">
                   <Link className="account-link" to={`/decks/${deck.id}`}>
-                    Create
+                    Edit
                   </Link>
                   <Link className="account-link secondary" to={`/study/${deck.id}`}>
                     Study

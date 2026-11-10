@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useLayoutEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthProvider } from './auth.tsx'
 import { Header } from './components/Header.tsx'
@@ -20,11 +20,27 @@ function Shell() {
     if (window.innerWidth < 800) setMenuOpen(false)
   }
 
+  useLayoutEffect(() => {
+    const header = document.querySelector('header')
+    if (!header) return
+    const apply = () => {
+      document.documentElement.style.setProperty('--header-h', `${header.getBoundingClientRect().height}px`)
+    }
+    apply()
+    const observer = new ResizeObserver(apply)
+    observer.observe(header)
+    window.addEventListener('resize', apply)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', apply)
+    }
+  }, [])
+
   return (
     <div className={menuOpen ? 'app-shell nav-open' : 'app-shell'}>
-      <Header menuOpen={menuOpen} onMenu={() => setMenuOpen((open) => !open)} />
+      <Header />
       <div className="app-body">
-        <Sidebar open={menuOpen} />
+        <Sidebar open={menuOpen} onToggle={() => setMenuOpen((open) => !open)} />
         <div className="app-main">
           <Outlet />
         </div>

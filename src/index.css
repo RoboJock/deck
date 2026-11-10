@@ -457,6 +457,38 @@ h1 {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 16px;
+  align-items: stretch;
+}
+
+.card-list > li {
+  display: flex;
+  min-width: 0;
+}
+
+.card-list .index-card {
+  flex: 1;
+  height: 360px;
+  overflow: hidden;
+}
+
+.card-list .index-card .card-face {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.card-list .index-card .card-photo {
+  flex: 0 1 88px;
+  width: 100%;
+  max-height: 88px;
+  min-height: 0;
+  object-fit: contain;
+}
+
+.card-list .index-card .pair {
+  margin-top: auto;
+  margin-bottom: 0;
+  flex: none;
 }
 
 .deck-tile,
@@ -644,12 +676,16 @@ h1 {
 .app-main {
   flex: 1;
   min-width: 0;
+  padding-top: 36px;
 }
 
 .sidebar {
   width: 248px;
   flex: none;
-  padding: 22px 16px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 16px 16px 40px;
   background: #f7fbf9;
   border-right: 1px solid #c5ddd3;
 }
@@ -877,6 +913,11 @@ button.danger-fill {
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
 }
 
+.card-list.is-horizontal .index-card {
+  height: 240px;
+  aspect-ratio: auto;
+}
+
 html[data-theme="dark"] {
   color: #e7f2ec;
   background: #12211c;
@@ -957,10 +998,12 @@ html[data-theme="dark"] .confirm {
 
 @media (min-width: 801px) {
   .app-shell:not(.nav-open) .sidebar {
-    width: 0;
-    padding: 0;
+    width: 72px;
     overflow: hidden;
-    border-right: 0;
+  }
+
+  .app-shell:not(.nav-open) .sidebar nav {
+    display: none;
   }
 }
 
@@ -970,18 +1013,27 @@ html[data-theme="dark"] .confirm {
   }
 
   .sidebar {
+    width: 72px;
+    padding: 16px;
+    overflow: hidden;
+  }
+
+  .sidebar nav {
     display: none;
   }
 
   .app-shell.nav-open .sidebar {
-    display: block;
     position: fixed;
     z-index: 25;
-    top: 64px;
+    top: var(--header-h, 68px);
     bottom: 0;
     left: 0;
     width: min(280px, 86vw);
     overflow: auto;
-    box-shadow: 8px 0 0 #0c1612;
+    box-shadow: 8px 0 24px rgb(12 22 18 / 18%);
+  }
+
+  .app-shell.nav-open .sidebar nav {
+    display: block;
   }
 }

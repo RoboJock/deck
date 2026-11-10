@@ -30,7 +30,7 @@ function SideSection({ title, children }: { title: string; children: ReactNode }
   )
 }
 
-export function Sidebar({ open }: { open: boolean }) {
+export function Sidebar({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   const { user } = useAuth()
   const [mine, setMine] = useState<SideDeck[]>([])
   const [others, setOthers] = useState<SideDeck[]>([])
@@ -88,6 +88,26 @@ export function Sidebar({ open }: { open: boolean }) {
 
   return (
     <aside className={open ? 'sidebar open' : 'sidebar'}>
+      <button
+        type="button"
+        className="secondary nav-toggle"
+        aria-expanded={open}
+        aria-label={open ? 'Collapse sidebar' : 'Expand sidebar'}
+        onClick={onToggle}
+      >
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="currentColor" strokeWidth="1.7" />
+          <path d="M9 4v16" stroke="currentColor" strokeWidth="1.7" />
+          <path
+            d={open ? 'M16 8l-4 4 4 4' : 'M12 8l4 4-4 4'}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
       <nav>
         <SideSection title="Your decks">
           {yourDecks.length === 0 ? (
