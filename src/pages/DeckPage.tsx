@@ -298,7 +298,7 @@ export function DeckPage() {
           <>
             <h1>Sign in to open this deck</h1>
             <p className="lede">Saved decks belong to an account.</p>
-            <Link className="account-link" to="/account">
+            <Link className="account-link" to="/account?mode=sign-in">
               Sign in
             </Link>
           </>

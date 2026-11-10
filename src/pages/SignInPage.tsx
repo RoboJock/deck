@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -12,7 +12,10 @@ import { useAuth } from '../useAuth.ts'
 
 export function SignInPage() {
   const { user, ready } = useAuth()
-  const [mode, setMode] = useState<'sign-in' | 'create'>('create')
+  const [searchParams] = useSearchParams()
+  const [mode, setMode] = useState<'sign-in' | 'create'>(
+    searchParams.get('mode') === 'sign-in' ? 'sign-in' : 'create',
+  )
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)

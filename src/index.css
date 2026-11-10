@@ -55,6 +55,8 @@ button.danger {
 
 button.text,
 a.text {
+  align-self: flex-start;
+  width: fit-content;
   border: 0;
   background: transparent;
   color: #0f6b4c;
@@ -431,6 +433,10 @@ h1 {
 .unsaved p {
   margin: 0 0 10px;
   color: #5c4314;
+}
+
+.unsaved .row {
+  margin: 0;
 }
 
 .wrap > .account-link {

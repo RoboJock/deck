@@ -25,9 +25,14 @@ export function Header() {
           </button>
         </div>
       ) : onAccount ? null : (
-        <Link className="account-link" to="/account">
-          Create an account
-        </Link>
+        <div className="row">
+          <Link className="account-link" to="/account">
+            Create an account
+          </Link>
+          <Link className="account-link secondary" to="/account?mode=sign-in">
+            Sign in
+          </Link>
+        </div>
       )}
     </header>
   )

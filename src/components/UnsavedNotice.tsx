@@ -6,9 +6,14 @@ export function UnsavedNotice() {
       <p>
         <strong>This deck will disappear.</strong> Create an account to save your deck.
       </p>
-      <Link className="account-link" to="/account">
-        Create an account
-      </Link>
+      <div className="row">
+        <Link className="account-link" to="/account">
+          Create an account
+        </Link>
+        <Link className="account-link secondary" to="/account?mode=sign-in">
+          Sign in
+        </Link>
+      </div>
     </aside>
   )
 }
