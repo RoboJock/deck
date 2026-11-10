@@ -49,8 +49,8 @@ export function StudyPage() {
         visibility: 'public' as const,
         front: card.front,
         back: card.back,
-        frontImage: '',
-        backImage: '',
+        frontImage: card.frontImage || '',
+        backImage: card.backImage || '',
         order: index,
       }))
       const order = shuffle(next.map((card) => card.id))

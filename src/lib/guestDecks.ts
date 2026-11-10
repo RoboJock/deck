@@ -79,7 +79,7 @@ export function createGuestDeck(title: string): GuestDeck {
 
 export function createGuestDeckWithCards(
   title: string,
-  cards: Array<Pick<GuestCard, 'front' | 'back'>>,
+  cards: Array<Pick<GuestCard, 'front' | 'back'> & Partial<Pick<GuestCard, 'frontImage' | 'backImage'>>>,
 ): GuestDeck {
   const createdAt = Date.now()
   const deck: GuestDeck = {
@@ -92,8 +92,8 @@ export function createGuestDeckWithCards(
       id: `card-${crypto.randomUUID()}`,
       front: card.front,
       back: card.back,
-      frontImage: '',
-      backImage: '',
+      frontImage: card.frontImage || '',
+      backImage: card.backImage || '',
       order: createdAt + index,
     })),
   }

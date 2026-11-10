@@ -1,10 +1,13 @@
 import { addDoc, collection, doc, serverTimestamp, writeBatch } from 'firebase/firestore'
 import { db } from './firebase.ts'
+import { exampleMedia } from './exampleMedia.ts'
 import { createGuestDeckWithCards } from './guestDecks.ts'
 
 export type ExampleCard = {
   front: string
   back: string
+  frontImage?: string
+  backImage?: string
 }
 
 export type ExampleDeck = {
@@ -63,6 +66,53 @@ export const examples: ExampleDeck[] = [
       { front: 'git pull', back: 'Download commits from the remote' },
     ],
   },
+  {
+    id: 'example-fruit',
+    title: 'Market fruit',
+    blurb: 'A photo on the front, the fruit’s name on the back.',
+    cards: [
+      { front: 'What fruit is this?', back: 'Apple', frontImage: exampleMedia.apple },
+      { front: 'What fruit is this?', back: 'Lemon', frontImage: exampleMedia.lemon },
+      { front: 'What fruit is this?', back: 'Strawberry', frontImage: exampleMedia.strawberry },
+      { front: 'What fruit is this?', back: 'Orange', frontImage: exampleMedia.orange },
+      { front: 'What fruit is this?', back: 'Grapes', frontImage: exampleMedia.grapes },
+    ],
+  },
+  {
+    id: 'example-flowers',
+    title: 'Garden flowers',
+    blurb: 'Photos of flowers. Name each one after you flip it.',
+    cards: [
+      { front: 'Name this flower', back: 'Sunflower', frontImage: exampleMedia.sunflower },
+      { front: 'Name this flower', back: 'Rose', frontImage: exampleMedia.rose },
+      { front: 'Name this flower', back: 'Daisy', frontImage: exampleMedia.daisy },
+      { front: 'Name this flower', back: 'Tulip', frontImage: exampleMedia.tulip },
+    ],
+  },
+  {
+    id: 'example-sketches',
+    title: 'Ink sketches',
+    blurb: 'A drawing on the front. Say what it is.',
+    cards: [
+      { front: 'What is this drawing?', back: 'House', frontImage: exampleMedia.house },
+      { front: 'What is this drawing?', back: 'Tree', frontImage: exampleMedia.tree },
+      { front: 'What is this drawing?', back: 'Fish', frontImage: exampleMedia.fish },
+      { front: 'What is this drawing?', back: 'Sun', frontImage: exampleMedia.sun },
+      { front: 'What is this drawing?', back: 'Boat', frontImage: exampleMedia.boat },
+    ],
+  },
+  {
+    id: 'example-animals',
+    title: 'Doodle animals',
+    blurb: 'Simple ink drawings of animals.',
+    cards: [
+      { front: 'Which animal is this?', back: 'Cat', frontImage: exampleMedia.cat },
+      { front: 'Which animal is this?', back: 'Bird', frontImage: exampleMedia.bird },
+      { front: 'Which animal is this?', back: 'Rabbit', frontImage: exampleMedia.rabbit },
+      { front: 'Which animal is this?', back: 'Snail', frontImage: exampleMedia.snail },
+      { front: 'Which animal is this?', back: 'Butterfly', frontImage: exampleMedia.butterfly },
+    ],
+  },
 ]
 
 export function isExampleDeckId(id: string): boolean {
@@ -94,6 +144,8 @@ export async function copyExampleDeck(example: ExampleDeck, uid: string | null):
       visibility: 'private',
       front: card.front,
       back: card.back,
+      frontImage: card.frontImage ?? '',
+      backImage: card.backImage ?? '',
       order: orderBase + index,
     })
   })
