@@ -237,7 +237,7 @@ export function StudyPage() {
           <p className="eyebrow">Finished</p>
           <h1>{title}</h1>
           <p className="lede">
-            Got it {count('got')} · Not sure {count('unsure')} · Study again {count('again')}
+            Got it {count('got')} · Skip {count('unsure')} · Don't know {count('again')}
           </p>
           {againIds.length > 0 ? (
             <button type="button" onClick={() => begin(againIds, true)}>
@@ -287,10 +287,10 @@ export function StudyPage() {
                 Got it
               </button>
               <button type="button" className="rate-unsure" onClick={() => rate('unsure')}>
-                Not sure
+                Skip
               </button>
               <button type="button" className="rate-again" onClick={() => rate('again')}>
-                Study again
+                Don't know
               </button>
             </div>
           ) : null}

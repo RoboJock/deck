@@ -402,8 +402,18 @@ h1 {
   margin: 12px 0 16px;
 }
 
-.top .row {
+.top .row,
+.top .pair {
   margin: 0;
+}
+
+#theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 46px;
+  padding: 10px 16px;
+  line-height: inherit;
 }
 
 .status {
@@ -592,30 +602,19 @@ h1 {
 }
 
 .study-card.is-back {
-  background-color: #f3f7fd;
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent,
-    transparent 31px,
-    #d4e2f2 32px
-  );
-  background-position: center 78px;
-  border: 1px solid #b7cbe2;
+  background: #fffaf0;
+  border: 1px solid #e4d3ac;
   border-top: 10px solid #2a62a0;
-  box-shadow: 8px 8px 0 #c5d6ea;
-}
-
-.study-card.is-back::before {
-  background: #2a62a0;
+  box-shadow: 8px 8px 0 #efd7a4;
 }
 
 .study-card.is-back .card-kicker {
-  color: #1d4e89;
-  background: #d9e8f8;
+  color: #1a5f86;
+  background: transparent;
 }
 
 .study-card.is-back .study-text {
-  color: #16324f;
+  color: #1a5f86;
 }
 
 .study-card .card-kicker {
@@ -685,9 +684,21 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  align-self: flex-start;
+  position: sticky;
+  top: var(--header-h, 68px);
+  height: calc(100vh - var(--header-h, 68px));
+  overflow: hidden;
   padding: 16px 16px 40px;
   background: #f7fbf9;
   border-right: 1px solid #c5ddd3;
+  z-index: 20;
+}
+
+.sidebar nav {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 
 .sidebar h2 {
@@ -789,13 +800,6 @@ button.danger-fill {
   color: #fff7f7;
 }
 
-#theme-toggle {
-  width: 42px;
-  height: 42px;
-  padding: 0;
-  font-size: 20px;
-  line-height: 1;
-}
 
 .title-form,
 .title-form input {
@@ -983,11 +987,16 @@ html[data-theme="dark"] a.secondary {
 
 html[data-theme="dark"] .index-card,
 html[data-theme="dark"] .deck-tile,
-html[data-theme="dark"] .study-card.is-front {
+html[data-theme="dark"] .study-card.is-front,
+html[data-theme="dark"] .study-card.is-back {
   background: #24362f;
   border-color: #4d6b5e;
   color: #e7f2ec;
   box-shadow: 8px 8px 0 #0c1612;
+}
+
+html[data-theme="dark"] .study-card.is-back {
+  border-top-color: #7eb6e6;
 }
 
 html[data-theme="dark"] .face-front,
@@ -1009,7 +1018,6 @@ html[data-theme="dark"] .confirm {
 @media (min-width: 801px) {
   .app-shell:not(.nav-open) .sidebar {
     width: 72px;
-    overflow: hidden;
   }
 
   .app-shell:not(.nav-open) .sidebar nav {
@@ -1025,7 +1033,6 @@ html[data-theme="dark"] .confirm {
   .sidebar {
     width: 72px;
     padding: 16px;
-    overflow: hidden;
   }
 
   .sidebar nav {
@@ -1039,7 +1046,8 @@ html[data-theme="dark"] .confirm {
     bottom: 0;
     left: 0;
     width: min(280px, 86vw);
-    overflow: auto;
+    height: auto;
+    overflow: hidden;
     box-shadow: 8px 0 24px rgb(12 22 18 / 18%);
   }
 
