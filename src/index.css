@@ -609,12 +609,13 @@ h1 {
 }
 
 .study-card.is-back .card-kicker {
-  color: #1a5f86;
-  background: transparent;
+  color: #1d4e89;
+  background: #d9e8f8;
 }
 
 .study-card.is-back .study-text {
-  color: #1a5f86;
+  color: #1b2830;
+  font-style: normal;
 }
 
 .study-card .card-kicker {
@@ -1004,9 +1005,17 @@ html[data-theme="dark"] .study-card.is-front .study-text {
   color: #f4fff8;
 }
 
-html[data-theme="dark"] .face-back,
-html[data-theme="dark"] .study-card.is-back .study-text {
+html[data-theme="dark"] .face-back {
   color: #9fd4ef;
+}
+
+html[data-theme="dark"] .study-card.is-back .study-text {
+  color: #f4fff8;
+}
+
+html[data-theme="dark"] .study-card.is-back .card-kicker {
+  color: #d7e8f8;
+  background: #1d3d5c;
 }
 
 html[data-theme="dark"] .confirm {
