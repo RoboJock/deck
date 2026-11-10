@@ -337,7 +337,7 @@ export function DeckPage() {
             <div>
             <form className="stack title-form" onSubmit={saveTitle}>
               <label>
-                Title
+                <span className="option-label">Title</span>
                 <input
                   value={title}
                   maxLength={100}
@@ -355,7 +355,7 @@ export function DeckPage() {
             </form>
             <div className="option-group">
               <p className="option-label">Who can view this deck:</p>
-              <div className="pair">
+              <div className="pair equal-pair">
                 <button
                   type="button"
                   className={deck.visibility === 'private' ? '' : 'secondary'}

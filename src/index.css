@@ -816,12 +816,33 @@ button.danger-fill {
 
 .option-label {
   margin: 0 0 12px;
+  font-size: 1rem;
   font-weight: 650;
 }
 
 .option-group .pair {
   gap: 22px;
   margin: 0;
+}
+
+.title-form .option-label {
+  display: block;
+}
+
+.title-form input {
+  margin-top: 0;
+  font-weight: 400;
+}
+
+.option-group .equal-pair {
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  width: max-content;
+}
+
+.equal-pair > button {
+  width: 100%;
 }
 
 .study-actions {
