@@ -4,13 +4,15 @@ import { FirebaseError } from 'firebase/app'
 import { collection, doc, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../lib/firebase.ts'
 import { explain } from '../lib/errors.ts'
+import { answersMatch } from '../lib/cardFile.ts'
+import { loadDailyPile } from '../lib/daily.ts'
 import { getExampleDeck, isExampleDeckId } from '../lib/examples.ts'
 import { getGuestDeck, isGuestDeckId, subscribeGuestDecks } from '../lib/guestDecks.ts'
+import { isStudyQuiet, setStudyQuiet, subscribeStudyQuiet } from '../lib/quiet.ts'
+import { marksForCards, removeProgress, saveProgress, type ProgressMark, type Rating } from '../lib/progress.ts'
 import { shuffle } from '../lib/shuffle.ts'
 import { useAuth } from '../useAuth.ts'
 import type { CardRecord, Orientation, Visibility } from '../types.ts'
-
-type Rating = 'got' | 'unsure' | 'again'
 
 function StudyFace({
   side,
@@ -36,12 +38,14 @@ function StudyFace({
   )
 }
 
-export function StudyPage() {
-  const { deckId = '' } = useParams()
+export function StudyPage({ daily = false }: { daily?: boolean }) {
+  const params = useParams()
+  const deckId = daily ? 'daily' : (params.deckId ?? '')
   const { user } = useAuth()
-  const guest = isGuestDeckId(deckId)
-  const example = isExampleDeckId(deckId)
+  const guest = !daily && isGuestDeckId(deckId)
+  const example = !daily && isExampleDeckId(deckId)
   const [title, setTitle] = useState('')
+  const [visibility, setVisibility] = useState<Visibility>('private')
   const [orientation, setOrientation] = useState<Orientation>('vertical')
   const [ownerId, setOwnerId] = useState('')
   const [cards, setCards] = useState<CardRecord[]>([])
@@ -57,8 +61,25 @@ export function StudyPage() {
   const [ratings, setRatings] = useState<Record<string, Rating>>({})
   const [roundIds, setRoundIds] = useState<string[]>([])
   const [done, setDone] = useState(false)
+  const [missedStart, setMissedStart] = useState(false)
+  const [typeCheck, setTypeCheck] = useState(() => localStorage.getItem('deck-type-check') === 'on')
+  const [typed, setTyped] = useState('')
+  const [verdict, setVerdict] = useState<'match' | 'miss' | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [quiet, setQuiet] = useState(isStudyQuiet())
+  const [undo, setUndo] = useState<{
+    cardId: string
+    index: number
+    previous: ProgressMark | null
+    ratings: Record<string, Rating>
+    done: boolean
+  } | null>(null)
   const [sessionDeck, setSessionDeck] = useState<string | null>(null)
+  const [sources, setSources] = useState<Record<string, { deckId: string; deckTitle: string }>>({})
   const started = useRef(false)
+  const memoryApplied = useRef('')
+  const lastMarks = useRef<Record<string, ProgressMark>>({})
 
   if (sessionDeck !== deckId) {
     setSessionDeck(deckId)
@@ -70,6 +91,11 @@ export function StudyPage() {
     setRevealed(false)
     setRatings({})
     setDone(false)
+    setMissedStart(false)
+    setTyped('')
+    setVerdict(null)
+    setUndo(null)
+    memoryApplied.current = ''
     const found = example ? getExampleDeck(deckId) : null
     if (found) {
       const next = found.cards.map((card, index) => ({
@@ -84,6 +110,7 @@ export function StudyPage() {
       }))
       const order = shuffle(next.map((card) => card.id))
       setTitle(found.title)
+      setVisibility('public')
       setOrientation('vertical')
       setMessage(null)
       setCards(next)
@@ -116,6 +143,8 @@ export function StudyPage() {
     setTurning(false)
     turningRef.current = false
     setRevealed(false)
+    setTyped('')
+    setVerdict(null)
     setDone(order.length === 0)
     if (!keepRatings) setRatings({})
   }
@@ -133,7 +162,7 @@ export function StudyPage() {
   }, [deckId])
 
   useEffect(() => {
-    if (!guest) return
+    if (!guest || daily) return
     const pull = () => {
       const found = getGuestDeck(deckId)
       if (!found) {
@@ -143,6 +172,7 @@ export function StudyPage() {
         return
       }
       setTitle(found.title)
+      setVisibility(found.visibility)
       setOwnerId('')
       setOrientation(found.orientation === 'horizontal' ? 'horizontal' : 'vertical')
       setMessage(null)
@@ -164,10 +194,47 @@ export function StudyPage() {
     }
     pull()
     return subscribeGuestDecks(pull)
-  }, [deckId, guest])
+  }, [deckId, guest, daily])
 
   useEffect(() => {
-    if (guest || example) return
+    if (!daily) return
+    let cancelled = false
+    setTitle('Today')
+    void loadDailyPile(user?.uid ?? null)
+      .then((pile) => {
+        if (cancelled) return
+        const sourceMap: Record<string, { deckId: string; deckTitle: string }> = {}
+        const next = pile.map((card, index) => {
+          sourceMap[card.id] = { deckId: card.deckId, deckTitle: card.deckTitle }
+          return {
+            id: card.id,
+            ownerId: '',
+            visibility: 'private' as const,
+            front: card.front,
+            back: card.back,
+            frontImage: card.frontImage,
+            backImage: card.backImage,
+            order: index,
+          }
+        })
+        setSources(sourceMap)
+        setCards(next)
+        setMessage(null)
+        begin(next.map((card) => card.id), false)
+        setReady(true)
+      })
+      .catch((caught) => {
+        if (cancelled) return
+        setMessage(explain(caught))
+        setReady(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [daily, user])
+
+  useEffect(() => {
+    if (guest || example || daily) return
     return onSnapshot(
       doc(db, 'decks', deckId),
       (snapshot) => {
@@ -178,6 +245,7 @@ export function StudyPage() {
         }
         const data = snapshot.data()
         setTitle(String(data.title ?? 'Deck'))
+        setVisibility(data.visibility === 'public' ? 'public' : 'private')
         setOwnerId(String(data.ownerId ?? ''))
         setOrientation(data.orientation === 'horizontal' ? 'horizontal' : 'vertical')
         setMessage(null)
@@ -192,10 +260,10 @@ export function StudyPage() {
         )
       },
     )
-  }, [deckId, example, guest])
+  }, [deckId, example, guest, daily])
 
   useEffect(() => {
-    if (guest || example || !ready || message) return
+    if (guest || example || daily || !ready || message) return
     const mine = user && user.uid === ownerId
     const cardsQuery = mine
       ? query(collection(db, 'decks', deckId, 'cards'), where('ownerId', '==', user.uid))
@@ -222,7 +290,35 @@ export function StudyPage() {
       },
       (caught) => setMessage(explain(caught)),
     )
-  }, [deckId, example, guest, message, ownerId, ready, user])
+  }, [deckId, example, guest, daily, message, ownerId, ready, user])
+
+  useEffect(() => {
+    if (daily || !ready || cards.length === 0 || message) return
+    const memoryKey = `${deckId}:${user?.uid ?? ''}`
+    if (memoryApplied.current === memoryKey) return
+    const snapshot = cards
+    let cancelled = false
+    void marksForCards(
+      user?.uid ?? null,
+      snapshot.map((item) => item.id),
+    ).then((marks) => {
+      if (cancelled) return
+      memoryApplied.current = memoryKey
+      lastMarks.current = { ...lastMarks.current, ...marks }
+      const missed = snapshot.filter((item) => marks[item.id]?.rating === 'again').map((item) => item.id)
+      if (missed.length > 0) {
+        setMissedStart(true)
+        begin(missed, false)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [daily, ready, deckId, message, cards.length, user])
+
+  useEffect(() => subscribeStudyQuiet(() => setQuiet(isStudyQuiet())), [])
+
+  useEffect(() => () => setStudyQuiet(false), [])
 
   function showCard(cardId: string) {
     return cards.find((card) => card.id === cardId)
@@ -230,9 +326,33 @@ export function StudyPage() {
 
   function rate(value: Rating) {
     const cardId = queue[index]
-    if (!cardId) return
+    const current = cards.find((item) => item.id === cardId)
+    if (!cardId || !current) return
+    const source = sources[cardId]
+    const mark: ProgressMark = {
+      cardId,
+      deckId: source?.deckId || deckId,
+      deckTitle: source?.deckTitle || title,
+      rating: value,
+      seenAt: Date.now(),
+      front: current.front,
+      back: current.back,
+      frontImage: current.frontImage,
+      backImage: current.backImage,
+    }
+    setUndo({
+      cardId,
+      index,
+      previous: lastMarks.current[cardId] ?? null,
+      ratings,
+      done,
+    })
+    lastMarks.current[cardId] = mark
+    void saveProgress(user?.uid ?? null, mark).catch((caught) => setSaveError(explain(caught)))
     const nextRatings = { ...ratings, [cardId]: value }
     setRatings(nextRatings)
+    setTyped('')
+    setVerdict(null)
     if (index + 1 >= queue.length) {
       setDone(true)
       return
@@ -242,6 +362,27 @@ export function StudyPage() {
     setTurning(false)
     turningRef.current = false
     setRevealed(false)
+  }
+
+  function undoMark() {
+    if (!undo) return
+    setIndex(undo.index)
+    setRatings(undo.ratings)
+    setDone(undo.done)
+    setRevealed(false)
+    setFlipped(false)
+    setTurning(false)
+    turningRef.current = false
+    setTyped('')
+    setVerdict(null)
+    if (undo.previous) {
+      lastMarks.current[undo.cardId] = undo.previous
+      void saveProgress(user?.uid ?? null, undo.previous).catch((caught) => setSaveError(explain(caught)))
+    } else {
+      delete lastMarks.current[undo.cardId]
+      void removeProgress(user?.uid ?? null, undo.cardId)
+    }
+    setUndo(null)
   }
 
   function chooseDirection(nextBackFirst: boolean) {
@@ -272,6 +413,52 @@ export function StudyPage() {
     setFlipped((current) => !current)
   }
 
+  function chooseTyping(next: boolean) {
+    setTypeCheck(next)
+    localStorage.setItem('deck-type-check', next ? 'on' : 'off')
+  }
+
+  function checkTyped() {
+    if (!card) return
+    const expected = backFirst === flipped ? card.back : card.front
+    setVerdict(answersMatch(typed, expected) ? 'match' : 'miss')
+  }
+
+  async function copyShareLink() {
+    const url = `${window.location.origin}/study/${deckId}`
+    try {
+      await navigator.clipboard.writeText(url)
+    } catch {
+      const area = document.createElement('textarea')
+      area.value = url
+      document.body.appendChild(area)
+      area.select()
+      document.execCommand('copy')
+      area.remove()
+    }
+    setCopied(true)
+  }
+
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      const target = event.target
+      if (target instanceof HTMLElement && target.closest('input, textarea, select')) return
+      if (done || !card) return
+      if (event.key === ' ' || event.code === 'Space') {
+        if (target instanceof HTMLElement && target.closest('button, a')) return
+        event.preventDefault()
+        flipCard()
+        return
+      }
+      if (!revealed) return
+      if (event.key === '1') rate('got')
+      if (event.key === '2') rate('unsure')
+      if (event.key === '3') rate('again')
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
   function count(value: Rating) {
     return roundIds.filter((id) => ratings[id] === value).length
   }
@@ -289,8 +476,10 @@ export function StudyPage() {
       ) : null}
       {!message && ready && cards.length === 0 ? (
         <>
-          <h1>{title || 'Study'}</h1>
-          <p className="status">This deck has no cards yet.</p>
+          <h1>{daily ? 'Today' : title || 'Study'}</h1>
+          <p className="status">
+            {daily ? 'Nothing is waiting today.' : 'This deck has no cards yet.'}
+          </p>
         </>
       ) : null}
       {!message && done ? (
@@ -315,16 +504,39 @@ export function StudyPage() {
             Study every card again
           </button>
           <p className="status">
-            Skipping cards you got is temporary. Those cards stay in the deck and come back when
-            you study every card.
+            Got it, Skip, and Don't know are saved. The next time you open this deck, it starts
+            with the cards you marked Don't know.
           </p>
+          {undo ? (
+            <button type="button" className="secondary" onClick={undoMark}>
+              Undo
+            </button>
+          ) : null}
         </div>
       ) : null}
       {!message && !done && card ? (
         <>
           <p className="status">
-            {title} · {index + 1} of {queue.length}
+            {daily ? 'Today' : title} · {index + 1} of {queue.length}
           </p>
+          {daily && sources[card.id]?.deckTitle ? (
+            <p className="status">{sources[card.id].deckTitle}</p>
+          ) : null}
+          {missedStart ? (
+            <p className="status">
+              Starting with cards you marked Don't know.{' '}
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => {
+                  setMissedStart(false)
+                  begin(cards.map((item) => item.id), false)
+                }}
+              >
+                Study the whole deck
+              </button>
+            </p>
+          ) : null}
           <div className={`flip-scene is-${orientation}`}>
           <button
             type="button"
@@ -352,6 +564,35 @@ export function StudyPage() {
             </span>
           </button>
           </div>
+          {typeCheck ? (
+            hiddenText(card, backFirst, flipped) ? (
+              <form
+                className="answer-box"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  checkTyped()
+                }}
+              >
+                <label>
+                  <span className="option-label">Your answer</span>
+                  <input
+                    value={typed}
+                    onChange={(event) => {
+                      setTyped(event.target.value)
+                      setVerdict(null)
+                    }}
+                  />
+                </label>
+                <button type="submit" className="secondary">
+                  Check
+                </button>
+                {verdict === 'match' ? <p className="saved">That matches.</p> : null}
+                {verdict === 'miss' ? <p className="status">Not quite. Flip the card to see it.</p> : null}
+              </form>
+            ) : (
+              <p className="status">This side is a picture. Flip the card to see it.</p>
+            )
+          ) : null}
           {revealed ? (
             <div className="rate-row">
               <button type="button" className="rate-got" onClick={() => rate('got')}>
@@ -365,6 +606,22 @@ export function StudyPage() {
               </button>
             </div>
           ) : null}
+          {undo ? (
+            <button type="button" className="secondary" onClick={undoMark}>
+              Undo
+            </button>
+          ) : null}
+          <div className="study-direction">
+            <p className="option-label">Type the answer:</p>
+            <div className="pair equal-pair">
+              <button type="button" className={typeCheck ? '' : 'secondary'} onClick={() => chooseTyping(true)}>
+                On
+              </button>
+              <button type="button" className={typeCheck ? 'secondary' : ''} onClick={() => chooseTyping(false)}>
+                Off
+              </button>
+            </div>
+          </div>
           <div className="study-direction">
             <p className="option-label">Study direction:</p>
             <div className="pair equal-pair">
@@ -384,8 +641,26 @@ export function StudyPage() {
               </button>
             </div>
           </div>
+          {saveError ? <p className="error">{saveError}</p> : null}
+          <p className="status">Space flips the card. After it is open, 1 is Got it, 2 is Skip, and 3 is Don't know.</p>
+          {visibility === 'public' ? (
+            <button type="button" className="secondary" onClick={copyShareLink}>
+              {copied ? 'Link copied' : 'Copy link'}
+            </button>
+          ) : null}
         </>
       ) : null}
+      <button
+        type="button"
+        className="secondary quiet-toggle"
+        onClick={() => setStudyQuiet(!quiet)}
+      >
+        {quiet ? 'Show the rest' : 'Hide the rest'}
+      </button>
     </main>
   )
+}
+
+function hiddenText(card: CardRecord, backFirst: boolean, flipped: boolean) {
+  return backFirst === flipped ? card.back : card.front
 }

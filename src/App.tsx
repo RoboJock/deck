@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthProvider } from './auth.tsx'
 import { Header } from './components/Header.tsx'
@@ -10,15 +10,19 @@ import { DecksPage } from './pages/DecksPage.tsx'
 import { ExamplesPage } from './pages/ExamplesPage.tsx'
 import { DeckPage } from './pages/DeckPage.tsx'
 import { StudyPage } from './pages/StudyPage.tsx'
+import { isStudyQuiet, subscribeStudyQuiet } from './lib/quiet.ts'
 
 function Shell() {
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(true)
+  const [quiet, setQuiet] = useState(isStudyQuiet())
   const [menuPath, setMenuPath] = useState(location.pathname)
   if (menuPath !== location.pathname) {
     setMenuPath(location.pathname)
     if (window.innerWidth < 800) setMenuOpen(false)
   }
+
+  useEffect(() => subscribeStudyQuiet(() => setQuiet(isStudyQuiet())), [])
 
   useLayoutEffect(() => {
     const header = document.querySelector('header')
@@ -37,7 +41,7 @@ function Shell() {
   }, [])
 
   return (
-    <div className={menuOpen ? 'app-shell nav-open' : 'app-shell'}>
+    <div className={`${menuOpen ? 'app-shell nav-open' : 'app-shell'}${quiet ? ' is-quiet' : ''}`}>
       <Header />
       <div className="app-body">
         <Sidebar open={menuOpen} onToggle={() => setMenuOpen((open) => !open)} />
@@ -70,6 +74,7 @@ function AppRoutes() {
         <Route path="/decks" element={<DecksPage />} />
         <Route path="/examples" element={<ExamplesPage />} />
         <Route path="/decks/:deckId" element={<DeckPage />} />
+        <Route path="/daily" element={<StudyPage daily />} />
         <Route path="/study/:deckId" element={<StudyPage />} />
         <Route path="/d/:deckId" element={<StudyPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />

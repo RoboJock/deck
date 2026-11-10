@@ -227,6 +227,55 @@ a {
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  margin-top: 8px;
+}
+
+.answer-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: min(440px, 100%);
+}
+
+.answer-box label {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+}
+
+.answer-box input {
+  width: 100%;
+}
+
+.quiet-toggle {
+  align-self: center;
+}
+
+.app-shell.is-quiet .quiet-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 40;
+}
+
+.app-shell.is-quiet .top,
+.app-shell.is-quiet .sidebar {
+  display: none;
+}
+
+.app-shell.is-quiet .app-body {
+  min-height: 100vh;
+}
+
+.card-list > li[draggable='true'] {
+  cursor: grab;
+}
+
+.file-input {
+  display: none;
 }
 
 .study-direction .option-label {

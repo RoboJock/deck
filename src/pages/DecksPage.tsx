@@ -68,11 +68,13 @@ export function DecksPage() {
         id: deck.id,
         title: deck.title,
         detail: `${deck.visibility === 'public' ? 'For anyone' : 'For you'} · ${deck.cardCount} cards`,
+        isPublic: deck.visibility === 'public',
       }))
     : visibleGuestDecks.map((deck) => ({
         id: deck.id,
         title: deck.title,
         detail: `${deck.cards.length} cards on this browser`,
+        isPublic: false,
       }))
 
   return (
@@ -105,6 +107,7 @@ export function DecksPage() {
                   <Link className="account-link secondary" to={`/study/${deck.id}`}>
                     Study
                   </Link>
+                  {deck.isPublic ? <CopyLink deckId={deck.id} /> : null}
                 </div>
               </li>
             ))}
@@ -112,5 +115,24 @@ export function DecksPage() {
         )}
       </main>
     </div>
+  )
+}
+
+function CopyLink({ deckId }: { deckId: string }) {
+  const [copied, setCopied] = useState(false)
+  return (
+    <button
+      type="button"
+      className="secondary"
+      onClick={() => {
+        const url = `${window.location.origin}/study/${deckId}`
+        void navigator.clipboard.writeText(url).then(
+          () => setCopied(true),
+          () => setCopied(false),
+        )
+      }}
+    >
+      {copied ? 'Link copied' : 'Copy link'}
+    </button>
   )
 }

@@ -85,7 +85,7 @@ service cloud.firestore {
             'ownerId', 'visibility', 'front', 'back', 'frontImage', 'backImage', 'order'
           ])
           && request.resource.data.ownerId == resource.data.ownerId
-          && request.resource.data.order == resource.data.order
+          && request.resource.data.order is number
           && (
             request.resource.data.visibility == deckData(deckId).visibility
             || request.resource.data.visibility == 'private'
@@ -96,6 +96,29 @@ service cloud.firestore {
         allow delete: if owns(resource.data.ownerId)
           && deckData(deckId).ownerId == request.auth.uid;
       }
+    }
+
+    match /users/{userId}/progress/{cardId} {
+      allow read, delete: if owns(userId);
+
+      allow create, update: if owns(userId)
+        && request.resource.data.keys().hasOnly([
+          'deckId', 'deckTitle', 'rating', 'seenAt', 'front', 'back', 'frontImage', 'backImage'
+        ])
+        && request.resource.data.deckId is string
+        && request.resource.data.deckId.size() <= 200
+        && request.resource.data.deckTitle is string
+        && request.resource.data.deckTitle.size() <= 100
+        && request.resource.data.rating in ['got', 'unsure', 'again']
+        && request.resource.data.seenAt is number
+        && request.resource.data.front is string
+        && request.resource.data.front.size() <= 600
+        && request.resource.data.back is string
+        && request.resource.data.back.size() <= 600
+        && request.resource.data.frontImage is string
+        && request.resource.data.frontImage.size() <= 180000
+        && request.resource.data.backImage is string
+        && request.resource.data.backImage.size() <= 180000;
     }
   }
 }

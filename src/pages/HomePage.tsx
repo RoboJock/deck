@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
 import { db } from '../lib/firebase.ts'
 import { explain } from '../lib/errors.ts'
+import { loadDailyPile } from '../lib/daily.ts'
 import { examples } from '../lib/examples.ts'
 import { createGuestDeck, migrateGuestDecks } from '../lib/guestDecks.ts'
 import { useAuth } from '../useAuth.ts'
@@ -15,6 +16,21 @@ export function HomePage() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+  const [waiting, setWaiting] = useState<number | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    loadDailyPile(user?.uid ?? null)
+      .then((pile) => {
+        if (!cancelled) setWaiting(pile.length)
+      })
+      .catch(() => {
+        if (!cancelled) setWaiting(0)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [user])
 
   useEffect(() => {
     if (!user) return
@@ -72,6 +88,18 @@ export function HomePage() {
             <h1>Make a deck</h1>
             <p className="lede">
               Put a prompt on the front and the answer on the back, then flip through the cards.
+            </p>
+            <p className="lede">
+              {waiting === null
+                ? 'Checking today’s cards.'
+                : waiting === 0
+                  ? 'Nothing is waiting today.'
+                  : null}
+              {waiting !== null && waiting > 0 ? (
+                <Link to="/daily">
+                  {waiting === 1 ? '1 card is waiting today.' : `${waiting} cards are waiting today.`}
+                </Link>
+              ) : null}
             </p>
             <form className="home-form" onSubmit={onCreate}>
               <label>

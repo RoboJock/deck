@@ -15,12 +15,16 @@ import {
 import { db } from '../lib/firebase.ts'
 import { explain } from '../lib/errors.ts'
 import { deleteEach, updateEach } from '../lib/batch.ts'
+import { parseCardFile } from '../lib/cardFile.ts'
+import { duplicateDeck, importCards } from '../lib/deckCopy.ts'
 import {
   addGuestCard,
+  addGuestCards,
   deleteGuestCard,
   deleteGuestDeck,
   getGuestDeck,
   isGuestDeckId,
+  reorderGuestCards,
   subscribeGuestDecks,
   updateGuestCard,
   updateGuestDeck,
@@ -49,6 +53,10 @@ export function DeckPage() {
   const [editFrontImage, setEditFrontImage] = useState('')
   const [editBackImage, setEditBackImage] = useState('')
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [dragId, setDragId] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const syncedTitle = useRef<string | null>(null)
@@ -298,6 +306,116 @@ export function DeckPage() {
     }
   }
 
+  async function copyShareLink() {
+    if (!deck) return
+    const url = `${window.location.origin}/study/${deck.id}`
+    try {
+      await navigator.clipboard.writeText(url)
+    } catch {
+      const area = document.createElement('textarea')
+      area.value = url
+      document.body.appendChild(area)
+      area.select()
+      document.execCommand('copy')
+      area.remove()
+    }
+    setCopied(true)
+  }
+
+  async function onImport(file: File) {
+    if (!deck) return
+    setPending(true)
+    setError(null)
+    setNotice(null)
+    try {
+      const parsed = parseCardFile(await file.text())
+      if (parsed.cards.length === 0) {
+        setError('That file has no cards. Put the front, a comma, and the back on each line.')
+        return
+      }
+      if (guest) addGuestCards(deck.id, parsed.cards)
+      else if (user) await importCards(deck.id, user.uid, deck.visibility, parsed.cards)
+      const skipped = parsed.skipped > 0 ? ` Skipped ${parsed.skipped} incomplete lines.` : ''
+      setNotice(`Brought in ${parsed.cards.length} cards.${skipped}`)
+    } catch (caught) {
+      setError(explain(caught))
+    } finally {
+      setPending(false)
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
+
+  async function onDuplicate() {
+    if (!deck) return
+    setPending(true)
+    setError(null)
+    try {
+      const id = await duplicateDeck(
+        {
+          title: deck.title,
+          orientation: deck.orientation,
+          cards: cards.map((card) => ({
+            front: card.front,
+            back: card.back,
+            frontImage: card.frontImage,
+            backImage: card.backImage,
+          })),
+        },
+        guest ? null : user?.uid ?? null,
+      )
+      navigate(`/decks/${id}`)
+    } catch (caught) {
+      setError(explain(caught))
+      setPending(false)
+    }
+  }
+
+  async function persistOrder(ordered: CardRecord[]) {
+    if (!deck) return
+    setPending(true)
+    setError(null)
+    try {
+      if (guest) {
+        reorderGuestCards(deck.id, ordered.map((card) => card.id))
+      } else {
+        const chunkSize = 400
+        for (let index = 0; index < ordered.length; index += chunkSize) {
+          const batch = writeBatch(db)
+          ordered.slice(index, index + chunkSize).forEach((card, offset) => {
+            if (card.ref) batch.update(card.ref, { order: index + offset })
+          })
+          await batch.commit()
+        }
+      }
+    } catch (caught) {
+      setError(explain(caught))
+    } finally {
+      setPending(false)
+    }
+  }
+
+  function moveCard(cardId: string, direction: -1 | 1) {
+    const from = cards.findIndex((card) => card.id === cardId)
+    const to = from + direction
+    if (from < 0 || to < 0 || to >= cards.length) return
+    const next = [...cards]
+    const [item] = next.splice(from, 1)
+    next.splice(to, 0, item)
+    void persistOrder(next)
+  }
+
+  function dropCard(targetId: string) {
+    if (!dragId || dragId === targetId) return
+    const next = [...cards]
+    const from = next.findIndex((card) => card.id === dragId)
+    const to = next.findIndex((card) => card.id === targetId)
+    if (from < 0 || to < 0) return
+    const [item] = next.splice(from, 1)
+    next.splice(to, 0, item)
+    setDragId(null)
+    void persistOrder(next)
+  }
+
   async function removeDeck() {
     if (!deck) return
     setPending(true)
@@ -400,6 +518,17 @@ export function DeckPage() {
                 <Link className="account-link" to={`/study/${deck.id}`}>
                   Study this deck
                 </Link>
+                <button type="button" className="secondary" disabled={pending} onClick={onDuplicate}>
+                  Duplicate
+                </button>
+                <button type="button" className="secondary" disabled={pending} onClick={() => fileRef.current?.click()}>
+                  Bring in a file
+                </button>
+                {!guest && deck.visibility === 'public' ? (
+                  <button type="button" className="secondary" onClick={copyShareLink}>
+                    {copied ? 'Link copied' : 'Copy link'}
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className="danger-fill"
@@ -409,6 +538,19 @@ export function DeckPage() {
                   Delete deck
                 </button>
               </div>
+              <input
+                ref={fileRef}
+                className="file-input"
+                type="file"
+                accept=".csv,.txt,.tsv,text/plain,text/csv"
+                onChange={(event) => {
+                  const file = event.target.files?.[0]
+                  if (file) void onImport(file)
+                }}
+              />
+              <p className="status">
+                A text file can add cards. Put the front, a comma, and the back on each line.
+              </p>
               {confirmingDelete ? (
                 <div className="confirm" role="alertdialog" aria-label={`Delete ${deck.title}`}>
                   <p>Delete “{deck.title}” and all of its cards?</p>
@@ -448,8 +590,14 @@ export function DeckPage() {
                   <p className="status">No cards yet.</p>
                 ) : (
                   <ul className={`card-list is-${deck.orientation}`}>
-                    {cards.map((card) => (
-                      <li key={card.id}>
+                    {cards.map((card, cardIndex) => (
+                      <li
+                        key={card.id}
+                        draggable={editingId !== card.id}
+                        onDragStart={() => setDragId(card.id)}
+                        onDragOver={(event) => event.preventDefault()}
+                        onDrop={() => dropCard(card.id)}
+                      >
                         {editingId === card.id ? (
                           <CardComposer
                             front={{ text: editFront, image: editFrontImage }}
@@ -476,6 +624,22 @@ export function DeckPage() {
                             {card.backImage ? <img className="card-photo" alt="" src={card.backImage} /> : null}
                             {card.back ? <p className="card-face">{card.back}</p> : null}
                             <div className="pair">
+                              <button
+                                type="button"
+                                className="secondary"
+                                disabled={pending || cardIndex === 0}
+                                onClick={() => moveCard(card.id, -1)}
+                              >
+                                Up
+                              </button>
+                              <button
+                                type="button"
+                                className="secondary"
+                                disabled={pending || cardIndex === cards.length - 1}
+                                onClick={() => moveCard(card.id, 1)}
+                              >
+                                Down
+                              </button>
                               <button
                                 type="button"
                                 className="secondary"
@@ -507,6 +671,7 @@ export function DeckPage() {
                 )}
           </>
         ) : null}
+        {notice ? <p className="saved">{notice}</p> : null}
         {error ? (
           <p className="error" role="alert">
             {error}

@@ -7,6 +7,7 @@ import {
   updateDoc,
 } from 'firebase/firestore'
 import { db } from './firebase.ts'
+import { retargetLocalProgress, uploadLocalProgress } from './progress.ts'
 import type { Orientation, Visibility } from '../types.ts'
 
 const STORAGE_KEY = 'deck.guest.v1'
@@ -108,6 +109,47 @@ export function updateGuestDeck(
   write(read().map((deck) => (deck.id === id ? { ...deck, ...patch } : deck)))
 }
 
+export function addGuestCards(
+  deckId: string,
+  incoming: Array<Pick<GuestCard, 'front' | 'back'>>,
+): void {
+  const createdAt = Date.now()
+  write(
+    read().map((deck) => {
+      if (deck.id !== deckId) return deck
+      return {
+        ...deck,
+        cards: [
+          ...deck.cards,
+          ...incoming.map((card, index) => ({
+            id: `card-${crypto.randomUUID()}`,
+            front: card.front,
+            back: card.back,
+            frontImage: '',
+            backImage: '',
+            order: createdAt + index,
+          })),
+        ],
+      }
+    }),
+  )
+}
+
+export function reorderGuestCards(deckId: string, orderedIds: string[]): void {
+  const rank = new Map(orderedIds.map((id, index) => [id, index]))
+  write(
+    read().map((deck) => {
+      if (deck.id !== deckId) return deck
+      return {
+        ...deck,
+        cards: deck.cards
+          .map((card) => ({ ...card, order: rank.get(card.id) ?? card.order }))
+          .sort((a, b) => a.order - b.order),
+      }
+    }),
+  )
+}
+
 export function addGuestCard(
   deckId: string,
   front: string,
@@ -174,10 +216,9 @@ let migration: Promise<number> | null = null
 
 export function migrateGuestDecks(uid: string): Promise<number> {
   if (migration) return migration
-  const decks = listGuestDecks()
-  if (decks.length === 0) return Promise.resolve(0)
 
   migration = (async () => {
+    const decks = listGuestDecks()
     let saved = 0
     for (const deck of decks) {
       const deckRef = await addDoc(collection(db, 'decks'), {
@@ -194,6 +235,7 @@ export function migrateGuestDecks(uid: string): Promise<number> {
         const batch = writeBatch(db)
         for (const card of deck.cards.slice(index, index + chunkSize)) {
           const cardRef = doc(collection(db, 'decks', deckRef.id, 'cards'))
+          retargetLocalProgress(card.id, cardRef.id, deckRef.id)
           batch.set(cardRef, {
             ownerId: uid,
             visibility: deck.visibility,
@@ -213,6 +255,7 @@ export function migrateGuestDecks(uid: string): Promise<number> {
       deleteGuestDeck(deck.id)
       saved += 1
     }
+    await uploadLocalProgress(uid)
     return saved
   })().finally(() => {
     migration = null
