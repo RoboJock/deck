@@ -26,7 +26,6 @@ import {
   updateGuestDeck,
 } from '../lib/guestDecks.ts'
 import { useAuth } from '../useAuth.ts'
-import { Header } from '../components/Header.tsx'
 import { UnsavedNotice } from '../components/UnsavedNotice.tsx'
 import type { CardRecord, DeckRecord, Visibility } from '../types.ts'
 
@@ -294,7 +293,6 @@ export function DeckPage() {
 
   return (
     <div className="frame">
-      <Header />
       <main className="wrap">
         {needsSignIn ? (
           <>
@@ -309,6 +307,8 @@ export function DeckPage() {
         {guest ? <UnsavedNotice /> : null}
         {deck ? (
           <>
+            <div className="editor-top">
+            <div>
             <form className="stack" onSubmit={saveTitle}>
               <label>
                 Title
@@ -362,6 +362,7 @@ export function DeckPage() {
             <Link className="account-link" to={`/study/${deck.id}`}>
               Study this deck
             </Link>
+            </div>
             <form className="stack" onSubmit={addCard}>
                   <label>
                     Front
@@ -388,6 +389,7 @@ export function DeckPage() {
                     Add card
                   </button>
                 </form>
+            </div>
                 {cards.length === 0 ? (
                   <p className="status">No cards yet.</p>
                 ) : (

@@ -132,39 +132,43 @@ a {
 
 .app-shell {
   display: flex;
-  align-items: stretch;
+  flex-direction: column;
   min-height: 100vh;
 }
 
-.app-main {
-  flex: 1;
+.top-start {
+  display: flex;
+  align-items: center;
+  gap: 18px;
   min-width: 0;
 }
 
-.sidebar {
-  flex: none;
-  width: auto;
-  background: #f7fbf9;
-  border-right: 1px solid #c5ddd3;
-  padding: 14px 12px;
+.deck-menu {
+  position: relative;
 }
 
-.sidebar.open {
-  width: 280px;
-  padding: 16px 16px 28px;
-}
-
-.sidebar-toggle {
-  width: auto;
+.deck-menu-button {
   white-space: nowrap;
 }
 
-.sidebar.open .sidebar-toggle {
-  width: 100%;
+.deck-panel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 10px);
+  left: 0;
+  width: min(340px, 78vw);
+  max-height: min(70vh, 520px);
+  overflow: auto;
+  padding: 8px 16px 16px;
+  text-align: left;
+  background: #f7fbf9;
+  border: 1px solid #c5ddd3;
+  border-radius: 16px;
+  box-shadow: 8px 8px 0 #cfe3da;
 }
 
-.sidebar-body h2 {
-  margin: 22px 0 8px;
+.deck-panel h2 {
+  margin: 16px 0 8px;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -172,13 +176,18 @@ a {
   color: #3e534c;
 }
 
-.sidebar-body ul {
+.deck-panel ul {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.deck-panel > .side-study {
+  display: inline-block;
+  margin-top: 16px;
 }
 
 .side-row {
@@ -209,13 +218,14 @@ a {
 }
 
 .study-screen {
-  min-height: 100vh;
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 18px;
-  padding: 40px 24px 56px;
+  width: min(1100px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 12px 0 64px;
   text-align: center;
 }
 
@@ -272,8 +282,53 @@ a {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  width: min(920px, calc(100% - 40px));
+  width: min(1100px, calc(100% - 48px));
   margin: 0 auto;
+}
+
+.home-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(260px, 380px);
+  gap: 36px;
+  align-items: start;
+}
+
+.home-top .lede {
+  margin-bottom: 16px;
+}
+
+.home-top .stack,
+.editor-top .stack {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.editor-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 440px);
+  gap: 36px;
+  align-items: start;
+  margin: 8px 0 28px;
+}
+
+.home-section {
+  margin-top: 36px;
+}
+
+.home-section h2 {
+  font-family: Georgia, "Iowan Old Style", serif;
+  font-size: 28px;
+  font-weight: 500;
+}
+
+.home-section .lede {
+  margin: 8px 0 16px;
+}
+
+a.secondary {
+  background: #fffdf8;
+  color: #0f6b4c;
 }
 
 h1 {
@@ -401,15 +456,21 @@ h1 {
   border-radius: 18px;
   background: #fffaf0;
   box-shadow: 8px 8px 0 #efd7a4;
-  text-align: center;
 }
 
 .deck-tile {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 28px 22px 22px;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 28px 22px 18px;
+  text-align: left;
   text-decoration: none;
+}
+
+.index-card,
+.study-card {
+  text-align: center;
 }
 
 .deck-tile::before,
@@ -457,26 +518,70 @@ h1 {
   align-items: stretch;
 }
 
+.study-card::before {
+  display: none;
+}
+
 .study-card {
   width: 100%;
-  min-height: 320px;
+  min-height: min(520px, 62vh);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 16px;
-  padding: 36px 28px;
+  padding: 42px 32px;
   color: #1b2830;
   cursor: pointer;
 }
 
+.study-card.is-front {
+  background: #fffaf0;
+  border: 1px solid #e4d3ac;
+  border-top: 10px solid #e23d3d;
+  box-shadow: 8px 8px 0 #efd7a4;
+}
+
+.study-card.is-front .card-kicker {
+  color: #9d1c1c;
+  background: #fde8e8;
+}
+
 .study-card.is-back {
-  background: #f3fff8;
+  background-color: #f3f7fd;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 31px,
+    #d4e2f2 32px
+  );
+  background-position: center 78px;
+  border: 1px solid #b7cbe2;
+  border-top: 10px solid #2a62a0;
+  box-shadow: 8px 8px 0 #c5d6ea;
+}
+
+.study-card.is-back::before {
+  background: #2a62a0;
+}
+
+.study-card.is-back .card-kicker {
+  color: #1d4e89;
+  background: #d9e8f8;
+}
+
+.study-card.is-back .study-text {
+  color: #16324f;
+}
+
+.study-card .card-kicker {
+  padding: 4px 12px;
+  border-radius: 999px;
 }
 
 .study-text {
   font-family: Georgia, "Iowan Old Style", serif;
-  font-size: 36px;
+  font-size: 40px;
   line-height: 1.25;
 }
 
@@ -491,26 +596,14 @@ h1 {
 }
 
 @media (max-width: 720px) {
-  .sidebar {
-    position: fixed;
-    z-index: 5;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: auto;
-    border-right: 0;
-    background: transparent;
-  }
-
-  .sidebar.open {
-    width: min(300px, 88vw);
-    background: #f7fbf9;
-    border-right: 1px solid #c5ddd3;
-    box-shadow: 8px 0 0 #e7f3ee;
-  }
-
+  .home-top,
+  .editor-top,
   .split {
     grid-template-columns: 1fr;
+  }
+
+  .top {
+    align-items: flex-start;
   }
 
   h1 {

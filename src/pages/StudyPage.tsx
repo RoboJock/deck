@@ -4,7 +4,9 @@ import { FirebaseError } from 'firebase/app'
 import { collection, doc, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../lib/firebase.ts'
 import { explain } from '../lib/errors.ts'
+import { getExampleDeck, isExampleDeckId } from '../lib/examples.ts'
 import { getGuestDeck, isGuestDeckId, subscribeGuestDecks } from '../lib/guestDecks.ts'
+import { shuffle } from '../lib/shuffle.ts'
 import { useAuth } from '../useAuth.ts'
 import type { CardRecord, Visibility } from '../types.ts'
 
@@ -14,6 +16,7 @@ export function StudyPage() {
   const { deckId = '' } = useParams()
   const { user } = useAuth()
   const guest = isGuestDeckId(deckId)
+  const example = isExampleDeckId(deckId)
   const [title, setTitle] = useState('')
   const [ownerId, setOwnerId] = useState('')
   const [cards, setCards] = useState<CardRecord[]>([])
@@ -26,17 +29,73 @@ export function StudyPage() {
   const [ratings, setRatings] = useState<Record<string, Rating>>({})
   const [roundIds, setRoundIds] = useState<string[]>([])
   const [done, setDone] = useState(false)
+  const [sessionDeck, setSessionDeck] = useState<string | null>(null)
   const started = useRef(false)
+
+  if (sessionDeck !== deckId) {
+    setSessionDeck(deckId)
+    setOwnerId('')
+    setIndex(0)
+    setFlipped(false)
+    setRevealed(false)
+    setRatings({})
+    setDone(false)
+    const found = example ? getExampleDeck(deckId) : null
+    if (found) {
+      const next = found.cards.map((card, index) => ({
+        id: `${found.id}-${index}`,
+        ownerId: '',
+        visibility: 'public' as const,
+        front: card.front,
+        back: card.back,
+        order: index,
+      }))
+      const order = shuffle(next.map((card) => card.id))
+      setTitle(found.title)
+      setMessage(null)
+      setCards(next)
+      setQueue(order)
+      setRoundIds(order)
+      setReady(true)
+    } else if (example) {
+      setTitle('')
+      setMessage('This deck does not exist.')
+      setCards([])
+      setQueue([])
+      setRoundIds([])
+      setReady(true)
+    } else {
+      setTitle('')
+      setMessage(null)
+      setCards([])
+      setQueue([])
+      setRoundIds([])
+      setReady(false)
+    }
+  }
+
+  function begin(ids: string[], keepRatings: boolean) {
+    const order = shuffle(ids)
+    setQueue(order)
+    setRoundIds(order)
+    setIndex(0)
+    setFlipped(false)
+    setRevealed(false)
+    setDone(order.length === 0)
+    if (!keepRatings) setRatings({})
+  }
 
   function takeCards(next: CardRecord[]) {
     setCards(next)
     if (!started.current && next.length > 0) {
       started.current = true
-      const ids = next.map((card) => card.id)
-      setQueue(ids)
-      setRoundIds(ids)
+      begin(next.map((card) => card.id), false)
     }
   }
+
+  useEffect(() => {
+    started.current = false
+  }, [deckId])
 
   useEffect(() => {
     if (!guest) return
@@ -70,7 +129,7 @@ export function StudyPage() {
   }, [deckId, guest])
 
   useEffect(() => {
-    if (guest) return
+    if (guest || example) return
     return onSnapshot(
       doc(db, 'decks', deckId),
       (snapshot) => {
@@ -94,10 +153,10 @@ export function StudyPage() {
         )
       },
     )
-  }, [deckId, guest])
+  }, [deckId, example, guest])
 
   useEffect(() => {
-    if (guest || !ready || message) return
+    if (guest || example || !ready || message) return
     const mine = user && user.uid === ownerId
     const cardsQuery = mine
       ? query(collection(db, 'decks', deckId, 'cards'), where('ownerId', '==', user.uid))
@@ -122,20 +181,10 @@ export function StudyPage() {
       },
       (caught) => setMessage(explain(caught)),
     )
-  }, [deckId, guest, message, ownerId, ready, user])
+  }, [deckId, example, guest, message, ownerId, ready, user])
 
   function showCard(cardId: string) {
     return cards.find((card) => card.id === cardId)
-  }
-
-  function begin(ids: string[], keepRatings: boolean) {
-    setQueue(ids)
-    setRoundIds(ids)
-    setIndex(0)
-    setFlipped(false)
-    setRevealed(false)
-    setDone(ids.length === 0)
-    if (!keepRatings) setRatings({})
   }
 
   function rate(value: Rating) {
@@ -207,7 +256,8 @@ export function StudyPage() {
           </p>
           <button
             type="button"
-            className={`study-card${flipped ? ' is-back' : ''}`}
+            className={`study-card${flipped ? ' is-back' : ' is-front'}`}
+            aria-label={`${flipped ? 'Back' : 'Front'} of the card. Click to flip.`}
             onClick={() => {
               setFlipped((current) => !current)
               setRevealed(true)
@@ -215,9 +265,6 @@ export function StudyPage() {
           >
             <span className="card-kicker">{flipped ? 'Back' : 'Front'}</span>
             <span className="study-text">{flipped ? card.back : card.front}</span>
-            <span className="hint">
-              {revealed ? 'Click the card to flip it' : 'Flip the card, then rate it'}
-            </span>
           </button>
           {revealed ? (
             <div className="rate-row">

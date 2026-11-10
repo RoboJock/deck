@@ -1,16 +1,22 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import { auth } from '../lib/firebase.ts'
 import { useAuth } from '../useAuth.ts'
+import { DeckMenu } from './DeckMenu.tsx'
 
-export function Header({ showAccount = true }: { showAccount?: boolean }) {
+export function Header() {
   const { user, ready } = useAuth()
+  const location = useLocation()
+  const onAccount = location.pathname === '/account'
 
   return (
     <header className="top">
-      <Link to="/" className="brand">
-        Deck
-      </Link>
+      <div className="top-start">
+        <Link to="/" className="brand">
+          Deck
+        </Link>
+        <DeckMenu />
+      </div>
       {ready && user ? (
         <div className="row tight">
           <span className="status">{user.email}</span>
@@ -18,11 +24,11 @@ export function Header({ showAccount = true }: { showAccount?: boolean }) {
             Sign out
           </button>
         </div>
-      ) : showAccount ? (
+      ) : onAccount ? null : (
         <Link className="account-link" to="/account">
           Create an account
         </Link>
-      ) : null}
+      )}
     </header>
   )
 }

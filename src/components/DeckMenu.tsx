@@ -1,30 +1,48 @@
-import { useEffect, useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import { collection, limit, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../lib/firebase.ts'
 import { listGuestDecks, subscribeGuestDecks } from '../lib/guestDecks.ts'
 import { useAuth } from '../useAuth.ts'
 
-type SideDeck = {
+type MenuDeck = {
   id: string
   title: string
   ownerId: string
 }
 
-export function Sidebar({
-  open,
-  onToggle,
-}: {
-  open: boolean
-  onToggle: () => void
-}) {
+export function DeckMenu() {
   const { user } = useAuth()
-  const [mine, setMine] = useState<SideDeck[]>([])
-  const [others, setOthers] = useState<SideDeck[]>([])
+  const location = useLocation()
+  const root = useRef<HTMLDivElement>(null)
+  const [open, setOpen] = useState(false)
+  const [menuPath, setMenuPath] = useState(location.pathname)
+  if (menuPath !== location.pathname) {
+    setMenuPath(location.pathname)
+    setOpen(false)
+  }
+  const [mine, setMine] = useState<MenuDeck[]>([])
+  const [others, setOthers] = useState<MenuDeck[]>([])
   const [guestDecks, setGuestDecks] = useState(listGuestDecks())
   const [othersNote, setOthersNote] = useState<string | null>(null)
 
   useEffect(() => subscribeGuestDecks(() => setGuestDecks(listGuestDecks())), [])
+
+  useEffect(() => {
+    if (!open) return
+    function onPointer(event: MouseEvent) {
+      if (!root.current?.contains(event.target as Node)) setOpen(false)
+    }
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', onPointer)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onPointer)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
 
   useEffect(() => {
     if (!user) return
@@ -54,11 +72,11 @@ export function Sidebar({
       (snapshot) => {
         const next = snapshot.docs.map((item) => {
           const data = item.data()
-return {
-          id: item.id,
-          title: String(data.title ?? 'Untitled'),
-          ownerId: String(data.ownerId ?? ''),
-        }
+          return {
+            id: item.id,
+            title: String(data.title ?? 'Untitled'),
+            ownerId: String(data.ownerId ?? ''),
+          }
         })
         next.sort((a, b) => a.title.localeCompare(b.title))
         setOthers(next)
@@ -68,18 +86,24 @@ return {
     )
   }, [])
 
-  const yourDecks: SideDeck[] = user
+  const yourDecks: MenuDeck[] = user
     ? mine
     : guestDecks.map((deck) => ({ id: deck.id, title: deck.title, ownerId: '' }))
   const otherDecks = others.filter((deck) => deck.ownerId !== user?.uid)
 
   return (
-    <aside className={open ? 'sidebar open' : 'sidebar'}>
-      <button type="button" className="secondary sidebar-toggle" onClick={onToggle}>
-        {open ? 'Hide decks' : 'Decks'}
+    <div className="deck-menu" ref={root}>
+      <button
+        type="button"
+        className="secondary deck-menu-button"
+        aria-expanded={open}
+        aria-controls="deck-menu-panel"
+        onClick={() => setOpen((value) => !value)}
+      >
+        Decks
       </button>
       {open ? (
-        <div className="sidebar-body">
+        <div className="deck-panel" id="deck-menu-panel">
           <section>
             <h2>Your decks</h2>
             {yourDecks.length === 0 ? (
@@ -122,8 +146,11 @@ return {
               </ul>
             )}
           </section>
+          <NavLink className="side-study" to="/#examples">
+            Example decks
+          </NavLink>
         </div>
       ) : null}
-    </aside>
+    </div>
   )
 }

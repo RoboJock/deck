@@ -63,12 +63,25 @@ export function subscribeGuestDecks(listener: () => void): () => void {
 }
 
 export function createGuestDeck(title: string): GuestDeck {
+  return createGuestDeckWithCards(title, [])
+}
+
+export function createGuestDeckWithCards(
+  title: string,
+  cards: Array<Pick<GuestCard, 'front' | 'back'>>,
+): GuestDeck {
+  const createdAt = Date.now()
   const deck: GuestDeck = {
     id: `guest-${crypto.randomUUID()}`,
     title,
     visibility: 'private',
-    createdAt: Date.now(),
-    cards: [],
+    createdAt,
+    cards: cards.map((card, index) => ({
+      id: `card-${crypto.randomUUID()}`,
+      front: card.front,
+      back: card.back,
+      order: createdAt + index,
+    })),
   }
   write([deck, ...read()])
   return deck

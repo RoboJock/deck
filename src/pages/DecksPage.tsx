@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   addDoc,
   collection,
@@ -18,8 +18,8 @@ import {
   subscribeGuestDecks,
 } from '../lib/guestDecks.ts'
 import { useAuth } from '../useAuth.ts'
-import { Header } from '../components/Header.tsx'
 import { UnsavedNotice } from '../components/UnsavedNotice.tsx'
+import { copyExampleDeck, examples } from '../lib/examples.ts'
 import type { DeckRecord, Visibility } from '../types.ts'
 
 export function DecksPage() {
@@ -31,6 +31,7 @@ export function DecksPage() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+  const [copyingId, setCopyingId] = useState<string | null>(null)
 
   useEffect(() => subscribeGuestDecks(() => setGuestDecks(listGuestDecks())), [])
 
@@ -107,31 +108,59 @@ export function DecksPage() {
 
   const visibleGuestDecks = user ? [] : guestDecks
 
+  async function onCopy(exampleId: string) {
+    const example = examples.find((item) => item.id === exampleId)
+    if (!example) return
+    setCopyingId(exampleId)
+    setError(null)
+    try {
+      const id = await copyExampleDeck(example, user?.uid ?? null)
+      navigate(`/decks/${id}`)
+    } catch (caught) {
+      setError(explain(caught))
+    } finally {
+      setCopyingId(null)
+    }
+  }
+
+  const yourDecks = user
+    ? decks.map((deck) => ({
+        id: deck.id,
+        title: deck.title,
+        detail: `${deck.visibility === 'public' ? 'For anyone' : 'For you'} · ${deck.cardCount} cards`,
+      }))
+    : visibleGuestDecks.map((deck) => ({
+        id: deck.id,
+        title: deck.title,
+        detail: `${deck.cards.length} cards on this browser`,
+      }))
+
   return (
     <div className="frame">
-      <Header />
       <main className="wrap">
-        <h1>{user ? 'Your decks' : 'Make a deck'}</h1>
-        <p className="lede">
-          {user
-            ? 'Decks saved to your account stay here when you come back.'
-            : 'Start now. An account is only needed when you want to keep the deck.'}
-        </p>
-        <div className={user ? undefined : 'split'}>
-          {user ? null : <UnsavedNotice />}
+        <div className="home-top">
+          <div>
+            <h1>{user ? 'Your decks' : 'Make a deck'}</h1>
+            <p className="lede">
+              {user
+                ? 'Decks saved to your account stay here when you come back. The examples below are ready to study or copy.'
+                : 'Start with a blank deck, or study an example and copy it. An account is only needed when you want to keep what you make.'}
+            </p>
+            {user ? null : <UnsavedNotice />}
+          </div>
           <form className="stack" onSubmit={onCreate}>
-          <label>
-            New deck
-            <input
-              value={title}
-              maxLength={100}
-              placeholder="Spanish verbs"
-              onChange={(event) => setTitle(event.target.value)}
-            />
-          </label>
-          <button type="submit" disabled={pending || title.trim().length === 0}>
-            {pending ? 'Creating…' : 'Create deck'}
-          </button>
+            <label>
+              New deck
+              <input
+                value={title}
+                maxLength={100}
+                placeholder="Spanish verbs"
+                onChange={(event) => setTitle(event.target.value)}
+              />
+            </label>
+            <button type="submit" disabled={pending || title.trim().length === 0}>
+              {pending ? 'Creating…' : 'Create deck'}
+            </button>
           </form>
         </div>
         {notice ? <p className="saved">{notice}</p> : null}
@@ -140,10 +169,55 @@ export function DecksPage() {
             {error}
           </p>
         ) : null}
-        <p className="status">
-          Your decks and public decks from other people are in the sidebar.
-          {visibleGuestDecks.length + decks.length === 0 ? ' No decks yet.' : ''}
-        </p>
+        {yourDecks.length > 0 ? (
+          <section className="home-section">
+            <h2>Your decks</h2>
+            <ul className="deck-list">
+              {yourDecks.map((deck) => (
+                <li key={deck.id} className="deck-tile">
+                  <strong>{deck.title}</strong>
+                  <span className="status">{deck.detail}</span>
+                  <div className="row">
+                    <Link className="account-link" to={`/decks/${deck.id}`}>
+                      Create
+                    </Link>
+                    <Link className="account-link secondary" to={`/study/${deck.id}`}>
+                      Study
+                    </Link>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+        <section className="home-section" id="examples">
+          <h2>Example decks</h2>
+          <p className="lede">
+            Study one to see how a deck feels, then copy it and change the cards.
+          </p>
+          <ul className="deck-list">
+            {examples.map((deck) => (
+              <li key={deck.id} className="deck-tile">
+                <strong>{deck.title}</strong>
+                <span className="status">{deck.blurb}</span>
+                <span className="status">{deck.cards.length} cards</span>
+                <div className="row">
+                  <Link className="account-link" to={`/study/${deck.id}`}>
+                    Study
+                  </Link>
+                  <button
+                    type="button"
+                    className="secondary"
+                    disabled={copyingId === deck.id}
+                    onClick={() => onCopy(deck.id)}
+                  >
+                    {copyingId === deck.id ? 'Copying…' : 'Copy'}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
       </main>
     </div>
   )

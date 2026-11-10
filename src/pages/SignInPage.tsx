@@ -9,7 +9,6 @@ import { auth } from '../lib/firebase.ts'
 import { explain } from '../lib/errors.ts'
 import { listGuestDecks } from '../lib/guestDecks.ts'
 import { useAuth } from '../useAuth.ts'
-import { Header } from '../components/Header.tsx'
 
 export function SignInPage() {
   const { user, ready } = useAuth()
@@ -41,7 +40,6 @@ export function SignInPage() {
 
   return (
     <div className="frame">
-      <Header showAccount={false} />
       <main className="wrap">
         <p className="eyebrow">Save your decks</p>
         <h1>{mode === 'create' ? 'Create an account' : 'Sign in'}</h1>
