@@ -264,23 +264,30 @@ export function StudyPage() {
           <p className="status">
             {title} · {index + 1} of {queue.length}
           </p>
+          <div className={`flip-scene is-${orientation}`}>
           <button
             type="button"
-            className={`study-card is-${orientation}${flipped ? ' is-back' : ' is-front'}`}
+            className="flip-card"
             aria-label={`${flipped ? 'Back' : 'Front'} of the card. Click to flip.`}
             onClick={() => {
               setFlipped((current) => !current)
               setRevealed(true)
             }}
           >
-            <span className="card-kicker">{flipped ? 'Back' : 'Front'}</span>
-            {(flipped ? card.backImage : card.frontImage) ? (
-              <img className="card-photo" alt="" src={flipped ? card.backImage : card.frontImage} />
-            ) : null}
-            <span className={`study-text ${flipped ? 'face-back' : 'face-front'}`}>
-              {flipped ? card.back : card.front}
+            <span className={`flip-inner${flipped ? ' is-flipped' : ''}`}>
+              <span className={`study-card flip-face is-${orientation} is-front`}>
+                <span className="card-kicker">Front</span>
+                {card.frontImage ? <img className="card-photo" alt="" src={card.frontImage} /> : null}
+                <span className="study-text face-front">{card.front}</span>
+              </span>
+              <span className={`study-card flip-face is-${orientation} is-back`}>
+                <span className="card-kicker">Back</span>
+                {card.backImage ? <img className="card-photo" alt="" src={card.backImage} /> : null}
+                <span className="study-text">{card.back}</span>
+              </span>
             </span>
           </button>
+          </div>
           {revealed ? (
             <div className="rate-row">
               <button type="button" className="rate-got" onClick={() => rate('got')}>
