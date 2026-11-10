@@ -117,9 +117,9 @@ export function DecksPage() {
             ? 'Decks saved to your account stay here when you come back.'
             : 'Start now. An account is only needed when you want to keep the deck.'}
         </p>
-        {user ? null : <UnsavedNotice />}
-        {notice ? <p className="saved">{notice}</p> : null}
-        <form className="stack" onSubmit={onCreate}>
+        <div className={user ? undefined : 'split'}>
+          {user ? null : <UnsavedNotice />}
+          <form className="stack" onSubmit={onCreate}>
           <label>
             New deck
             <input
@@ -132,7 +132,9 @@ export function DecksPage() {
           <button type="submit" disabled={pending || title.trim().length === 0}>
             {pending ? 'Creating…' : 'Create deck'}
           </button>
-        </form>
+          </form>
+        </div>
+        {notice ? <p className="saved">{notice}</p> : null}
         {error ? (
           <p className="error" role="alert">
             {error}
