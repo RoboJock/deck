@@ -1,0 +1,88 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function owns(ownerId) {
+      return signedIn() && request.auth.uid == ownerId;
+    }
+
+    function deckData(deckId) {
+      return get(/databases/$(database)/documents/decks/$(deckId)).data;
+    }
+
+    match /decks/{deckId} {
+      allow read: if resource.data.visibility == 'public'
+        || owns(resource.data.ownerId);
+
+      allow create: if owns(request.resource.data.ownerId)
+        && request.resource.data.keys().hasOnly([
+          'ownerId', 'title', 'visibility', 'cardCount', 'createdAt'
+        ])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 100
+        && request.resource.data.visibility in ['public', 'private']
+        && request.resource.data.cardCount == 0
+        && request.resource.data.createdAt is timestamp;
+
+      allow update: if owns(resource.data.ownerId)
+        && request.resource.data.keys().hasOnly([
+          'ownerId', 'title', 'visibility', 'cardCount', 'createdAt'
+        ])
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 100
+        && request.resource.data.visibility in ['public', 'private']
+        && request.resource.data.cardCount is int
+        && request.resource.data.cardCount >= 0;
+
+      allow delete: if owns(resource.data.ownerId);
+
+      match /cards/{cardId} {
+        allow read: if resource.data.visibility == 'public'
+          || owns(resource.data.ownerId);
+
+        allow create: if owns(request.resource.data.ownerId)
+          && deckData(deckId).ownerId == request.auth.uid
+          && request.resource.data.keys().hasOnly([
+            'ownerId', 'visibility', 'front', 'back', 'order'
+          ])
+          && request.resource.data.visibility == deckData(deckId).visibility
+          && request.resource.data.front is string
+          && request.resource.data.back is string
+          && request.resource.data.front.size() > 0
+          && request.resource.data.front.size() <= 600
+          && request.resource.data.back.size() > 0
+          && request.resource.data.back.size() <= 600
+          && request.resource.data.order is number;
+
+        allow update: if owns(resource.data.ownerId)
+          && deckData(deckId).ownerId == request.auth.uid
+          && request.resource.data.keys().hasOnly([
+            'ownerId', 'visibility', 'front', 'back', 'order'
+          ])
+          && request.resource.data.ownerId == resource.data.ownerId
+          && request.resource.data.order == resource.data.order
+          && (
+            request.resource.data.visibility == deckData(deckId).visibility
+            || request.resource.data.visibility == 'private'
+          )
+          && request.resource.data.front is string
+          && request.resource.data.back is string
+          && request.resource.data.front.size() > 0
+          && request.resource.data.front.size() <= 600
+          && request.resource.data.back.size() > 0
+          && request.resource.data.back.size() <= 600;
+
+        allow delete: if owns(resource.data.ownerId)
+          && deckData(deckId).ownerId == request.auth.uid;
+      }
+    }
+  }
+}
