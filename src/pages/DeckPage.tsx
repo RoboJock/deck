@@ -50,7 +50,6 @@ export function DeckPage() {
   const [editBackImage, setEditBackImage] = useState('')
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const syncedTitle = useRef<string | null>(null)
 
@@ -316,16 +315,6 @@ export function DeckPage() {
     }
   }
 
-  async function copyLink() {
-    const link = `${window.location.origin}/d/${deckId}`
-    try {
-      await navigator.clipboard.writeText(link)
-      setNotice('Link copied.')
-    } catch {
-      setNotice(link)
-    }
-  }
-
   const needsSignIn = ready && !user && !guest
 
   return (
@@ -364,57 +353,48 @@ export function DeckPage() {
                 Save title
               </button>
             </form>
-            <div className="pair">
-              <button
-                type="button"
-                className={deck.visibility === 'private' ? '' : 'secondary'}
-                disabled={pending}
-                onClick={() => changeVisibility('private')}
-              >
-                For you
-              </button>
-              <button
-                type="button"
-                className={deck.visibility === 'public' ? '' : 'secondary'}
-                disabled={pending}
-                onClick={() => changeVisibility('public')}
-              >
-                For anyone
-              </button>
+            <div className="option-group">
+              <p className="option-label">Who can view this deck:</p>
+              <div className="pair">
+                <button
+                  type="button"
+                  className={deck.visibility === 'private' ? '' : 'secondary'}
+                  disabled={pending}
+                  onClick={() => changeVisibility('private')}
+                >
+                  Me
+                </button>
+                <button
+                  type="button"
+                  className={deck.visibility === 'public' ? '' : 'secondary'}
+                  disabled={pending}
+                  onClick={() => changeVisibility('public')}
+                >
+                  Anyone
+                </button>
+              </div>
             </div>
-            {deck.visibility === 'public' ? (
-              <p className="status deck-note">
-                {guest
-                  ? 'Anyone can open this deck after you save it to an account. Until then, it still disappears with this browser.'
-                  : 'Anyone with the link can flip these cards.'}{' '}
-                {guest ? null : (
-                  <button type="button" className="text" onClick={copyLink}>
-                    Copy link
-                  </button>
-                )}
-              </p>
-            ) : (
-              <p className="status deck-note">Only you can open this deck.</p>
-            )}
-            <div className="pair">
-              <button
-                type="button"
-                className={deck.orientation === 'vertical' ? '' : 'secondary'}
-                disabled={pending}
-                onClick={() => changeOrientation('vertical')}
-              >
-                Vertical
-              </button>
-              <button
-                type="button"
-                className={deck.orientation === 'horizontal' ? '' : 'secondary'}
-                disabled={pending}
-                onClick={() => changeOrientation('horizontal')}
-              >
-                Horizontal
-              </button>
+            <div className="option-group">
+              <p className="option-label">Card view:</p>
+              <div className="pair">
+                <button
+                  type="button"
+                  className={deck.orientation === 'vertical' ? '' : 'secondary'}
+                  disabled={pending}
+                  onClick={() => changeOrientation('vertical')}
+                >
+                  Vertical
+                </button>
+                <button
+                  type="button"
+                  className={deck.orientation === 'horizontal' ? '' : 'secondary'}
+                  disabled={pending}
+                  onClick={() => changeOrientation('horizontal')}
+                >
+                  Horizontal
+                </button>
+              </div>
             </div>
-            {notice ? <p className="status">{notice}</p> : null}
             <div className="study-actions">
               <div className="pair">
                 <Link className="account-link" to={`/study/${deck.id}`}>

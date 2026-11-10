@@ -810,8 +810,18 @@ button.danger-fill {
   max-width: 100%;
 }
 
-.deck-note {
-  margin: 0 0 16px;
+.option-group {
+  margin: 0 0 28px;
+}
+
+.option-label {
+  margin: 0 0 12px;
+  font-weight: 650;
+}
+
+.option-group .pair {
+  gap: 22px;
+  margin: 0;
 }
 
 .study-actions {
