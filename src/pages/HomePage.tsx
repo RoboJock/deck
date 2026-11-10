@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
 import { db } from '../lib/firebase.ts'
 import { explain } from '../lib/errors.ts'
+import { examples } from '../lib/examples.ts'
 import { createGuestDeck, migrateGuestDecks } from '../lib/guestDecks.ts'
 import { useAuth } from '../useAuth.ts'
-import { UnsavedNotice } from '../components/UnsavedNotice.tsx'
 
 export function HomePage() {
   const { user } = useAuth()
@@ -67,31 +67,47 @@ export function HomePage() {
   return (
     <div className="frame">
       <main className="wrap">
-        <div className="home-top">
-          <div>
+        <div className="home-stage">
+          <div className="home-intro">
             <h1>Make a deck</h1>
             <p className="lede">
-              {user
-                ? 'Name a deck and start adding cards. Saved decks stay with your account.'
-                : 'Name a deck and start adding cards. An account is only needed when you want to keep what you make.'}
+              Put a prompt on the front and the answer on the back, then flip through the cards.
             </p>
-            {user ? null : <UnsavedNotice />}
+            <form className="home-form" onSubmit={onCreate}>
+              <label>
+                <span className="option-label">New deck</span>
+                <input
+                  value={title}
+                  maxLength={100}
+                  placeholder="Spanish verbs"
+                  onChange={(event) => setTitle(event.target.value)}
+                />
+              </label>
+              <button type="submit" disabled={pending || title.trim().length === 0}>
+                {pending ? 'Creating…' : 'Create deck'}
+              </button>
+            </form>
           </div>
-          <form className="stack" onSubmit={onCreate}>
-            <label>
-              New deck
-              <input
-                value={title}
-                maxLength={100}
-                placeholder="Spanish verbs"
-                onChange={(event) => setTitle(event.target.value)}
-              />
-            </label>
-            <button type="submit" disabled={pending || title.trim().length === 0}>
-              {pending ? 'Creating…' : 'Create deck'}
-            </button>
-          </form>
+          <article className="index-card home-sample" aria-hidden="true">
+            <p className="card-kicker">Front</p>
+            <p className="card-face">hacer</p>
+            <p className="card-kicker back-kicker">Back</p>
+            <p className="card-face">to do or to make</p>
+          </article>
         </div>
+        <section className="home-examples">
+          <h2>Or flip through a finished deck</h2>
+          <ul className="home-picks">
+            {examples.map((deck) => (
+              <li key={deck.id}>
+                <Link className="home-pick" to={`/study/${deck.id}`}>
+                  <strong>{deck.title}</strong>
+                  <span>{deck.blurb}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
         {notice ? <p className="saved">{notice}</p> : null}
         {error ? (
           <p className="error" role="alert">

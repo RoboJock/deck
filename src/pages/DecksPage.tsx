@@ -5,7 +5,6 @@ import { db } from '../lib/firebase.ts'
 import { explain } from '../lib/errors.ts'
 import { listGuestDecks, migrateGuestDecks, subscribeGuestDecks } from '../lib/guestDecks.ts'
 import { useAuth } from '../useAuth.ts'
-import { UnsavedNotice } from '../components/UnsavedNotice.tsx'
 import type { DeckRecord, Orientation, Visibility } from '../types.ts'
 
 export function DecksPage() {
@@ -85,7 +84,6 @@ export function DecksPage() {
             ? 'Decks saved to your account stay here when you come back.'
             : 'These decks are stored in this browser until you create an account.'}
         </p>
-        {user ? null : <UnsavedNotice />}
         {notice ? <p className="saved">{notice}</p> : null}
         {error ? (
           <p className="error" role="alert">

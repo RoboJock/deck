@@ -294,18 +294,86 @@ a {
   margin: 0 auto;
 }
 
-.home-top {
+.home-stage {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(260px, 380px);
-  gap: 36px;
-  align-items: start;
+  grid-template-columns: minmax(0, 1.15fr) minmax(240px, 380px);
+  gap: 48px;
+  align-items: center;
 }
 
-.home-top .lede {
-  margin-bottom: 16px;
+.home-intro .lede {
+  margin-bottom: 8px;
+  max-width: 460px;
 }
 
-.home-top .stack,
+.home-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  width: min(100%, 440px);
+  margin-top: 18px;
+}
+
+.home-form input {
+  margin-top: 0;
+  font-weight: 400;
+}
+
+.home-sample {
+  min-height: 380px;
+  justify-content: center;
+  gap: 18px;
+  padding: 52px 32px 40px;
+}
+
+.home-sample .card-face {
+  font-size: 36px;
+}
+
+.home-examples {
+  margin-top: 56px;
+}
+
+.home-examples h2 {
+  font-family: Georgia, "Iowan Old Style", serif;
+  font-size: 28px;
+  font-weight: 500;
+}
+
+.home-picks {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 16px 0 0;
+  padding: 0;
+}
+
+.home-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  padding: 22px 16px 18px;
+  text-decoration: none;
+  background: #fffaf0;
+  border: 1px solid #e4d3ac;
+  border-radius: 16px;
+  box-shadow: 5px 5px 0 #efd7a4;
+}
+
+.home-pick strong {
+  font-family: Georgia, "Iowan Old Style", serif;
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.home-pick span {
+  color: #3e534c;
+  font-size: 14px;
+}
+
 .editor-top .stack {
   width: 100%;
   max-width: none;
@@ -642,7 +710,8 @@ h1 {
 }
 
 @media (max-width: 720px) {
-  .home-top,
+  .home-stage,
+  .home-picks,
   .editor-top,
   .split,
   .composer {
@@ -1000,6 +1069,7 @@ html[data-theme="dark"] .top-link.active {
 
 html[data-theme="dark"] .status,
 html[data-theme="dark"] .lede,
+html[data-theme="dark"] .home-pick span,
 html[data-theme="dark"] .sidebar h2 {
   color: #b7cdc4;
 }
@@ -1021,6 +1091,7 @@ html[data-theme="dark"] a.secondary {
 }
 
 html[data-theme="dark"] .index-card,
+html[data-theme="dark"] .home-pick,
 html[data-theme="dark"] .deck-tile,
 html[data-theme="dark"] .study-card.is-front,
 html[data-theme="dark"] .study-card.is-back {
