@@ -26,10 +26,12 @@ function StudyFace({
   image: string
 }) {
   return (
-    <span className={`study-card flip-face is-${orientation} is-${side}${rear ? ' is-rear' : ''}`}>
-      <span className="card-kicker">{side === 'front' ? 'Front' : 'Back'}</span>
-      {image ? <img className="card-photo" alt="" src={image} /> : null}
-      <span className={`study-text${side === 'front' ? ' face-front' : ''}`}>{text}</span>
+    <span className={`flip-face${rear ? ' is-rear' : ''}`}>
+      <span className={`study-card is-${orientation} is-${side}`}>
+        <span className="card-kicker">{side === 'front' ? 'Front' : 'Back'}</span>
+        {image ? <img className="card-photo" alt="" src={image} /> : null}
+        <span className={`study-text${side === 'front' ? ' face-front' : ''}`}>{text}</span>
+      </span>
     </span>
   )
 }

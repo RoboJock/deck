@@ -731,24 +731,52 @@ button.flip-card {
 }
 
 .flip-face {
+  display: block;
   width: 100%;
   box-sizing: border-box;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  transform: rotateY(0deg);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .study-text {
   max-width: 100%;
 }
 
-.flip-face {
-  display: flex;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
 .flip-face.is-rear {
   position: absolute;
   inset: 0;
   transform: rotateY(180deg);
+}
+
+.flip-scene .study-card {
+  width: 100%;
+  height: 100%;
+}
+
+/* The concealed face stays unpainted while the card is still.
+   A painted back face leaves a line or a box on the side you are looking at. */
+.flip-face.is-rear {
+  visibility: hidden;
+  transition: visibility 0s linear 0.6s;
+}
+
+.flip-inner.is-flipped .flip-face.is-rear {
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.flip-face:not(.is-rear) {
+  visibility: visible;
+  transition: visibility 0s linear 0s;
+}
+
+.flip-inner.is-flipped .flip-face:not(.is-rear) {
+  visibility: hidden;
+  transition-delay: 0.6s;
 }
 
 .flip-inner {
@@ -761,7 +789,10 @@ button.flip-card {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .flip-inner {
+  .flip-inner,
+  .flip-face,
+  .flip-face.is-rear,
+  .flip-inner.is-flipped .flip-face:not(.is-rear) {
     transition: none;
   }
 }
