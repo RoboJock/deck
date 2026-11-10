@@ -717,7 +717,7 @@ h1 {
 .side-link.active {
   background: #e3f3eb;
   color: #0f6b4c;
-  font-weight: 700;
+  font-weight: 650;
 }
 
 .top-links {
@@ -753,8 +753,18 @@ button.side-heading {
   background: transparent;
   color: #3e534c;
   text-align: left;
-  font-size: 13px;
+  font-size: 18px;
   font-weight: 700;
+}
+
+.sidebar .side-link,
+.sidebar .status {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sidebar .side-link.active {
+  font-weight: 650;
 }
 
 .pair {
