@@ -281,6 +281,9 @@ a {
   letter-spacing: -0.03em;
   text-decoration: none;
   color: #145c42;
+  margin-right: 4px;
+  padding-right: 16px;
+  border-right: 1px solid #c5ddd3;
 }
 
 .wrap {
@@ -697,7 +700,12 @@ h1 {
 }
 
 .nav-toggle {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
 }
 
 button.side-heading {
@@ -864,6 +872,10 @@ html[data-theme="dark"] .deck-panel {
   color: #e7f2ec;
 }
 
+html[data-theme="dark"] .brand {
+  border-right-color: #345249;
+}
+
 html[data-theme="dark"] .side-link,
 html[data-theme="dark"] .brand,
 html[data-theme="dark"] .top-link,
@@ -928,8 +940,8 @@ html[data-theme="dark"] .confirm {
 }
 
 @media (max-width: 800px) {
-  .top-links {
-    display: none;
+  .top {
+    flex-wrap: wrap;
   }
 
   .sidebar {
