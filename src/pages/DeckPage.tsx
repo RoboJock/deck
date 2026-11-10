@@ -415,9 +415,38 @@ export function DeckPage() {
               <p className="status">Only you can open this deck.</p>
             )}
             {notice ? <p className="status">{notice}</p> : null}
-            <Link className="account-link study-launch" to={`/study/${deck.id}`}>
-              Study this deck
-            </Link>
+            <div className="study-actions">
+              <div className="pair">
+                <Link className="account-link" to={`/study/${deck.id}`}>
+                  Study this deck
+                </Link>
+                <button
+                  type="button"
+                  className="danger-fill"
+                  disabled={pending}
+                  onClick={() => setConfirmingDelete(true)}
+                >
+                  Delete deck
+                </button>
+              </div>
+              {confirmingDelete ? (
+                <div className="confirm" role="alertdialog" aria-label={`Delete ${deck.title}`}>
+                  <p>Delete “{deck.title}” and all of its cards?</p>
+                  <div className="pair">
+                    <button type="button" className="danger-fill" disabled={pending} onClick={removeDeck}>
+                      Delete {deck.title}
+                    </button>
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => setConfirmingDelete(false)}
+                    >
+                      Keep {deck.title}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
             </div>
             <CardComposer
               front={{ text: front, image: frontImage }}
@@ -465,7 +494,7 @@ export function DeckPage() {
                             {card.front ? <p className="card-face face-front">{card.front}</p> : null}
                             <p className="card-kicker back-kicker">Back</p>
                             {card.backImage ? <img className="card-photo" alt="" src={card.backImage} /> : null}
-                            {card.back ? <p className="card-face face-back">{card.back}</p> : null}
+                            {card.back ? <p className="card-face">{card.back}</p> : null}
                             <div className="pair">
                               <button
                                 type="button"
@@ -496,23 +525,6 @@ export function DeckPage() {
                     ))}
                   </ul>
                 )}
-            {confirmingDelete ? (
-              <div className="confirm" role="alertdialog" aria-label={`Delete ${deck.title}`}>
-                <p>Delete “{deck.title}” and all of its cards?</p>
-                <div className="pair">
-                  <button type="button" className="danger" disabled={pending} onClick={removeDeck}>
-                    Delete {deck.title}
-                  </button>
-                  <button type="button" className="secondary" onClick={() => setConfirmingDelete(false)}>
-                    Keep {deck.title}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <button type="button" className="danger" disabled={pending} onClick={() => setConfirmingDelete(true)}>
-                Delete deck
-              </button>
-            )}
           </>
         ) : null}
         {error ? (

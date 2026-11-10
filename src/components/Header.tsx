@@ -34,7 +34,7 @@ export function Header({
           aria-expanded={menuOpen}
           onClick={onMenu}
         >
-          Menu
+          {menuOpen ? 'Hide' : 'Decks'}
         </button>
         <NavLink to="/" className="brand">
           Deck
@@ -52,8 +52,14 @@ export function Header({
         </nav>
       </div>
       <div className="row">
-        <button type="button" className="secondary" id="theme-toggle" onClick={toggleTheme}>
-          {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+        <button
+          type="button"
+          className="secondary"
+          id="theme-toggle"
+          aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          onClick={toggleTheme}
+        >
+          {theme === 'dark' ? '☾' : '☀'}
         </button>
         {ready && user ? (
           <>

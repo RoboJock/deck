@@ -607,7 +607,8 @@ h1 {
 @media (max-width: 720px) {
   .home-top,
   .editor-top,
-  .split {
+  .split,
+  .composer {
     grid-template-columns: 1fr;
   }
 
@@ -696,7 +697,20 @@ h1 {
 }
 
 .nav-toggle {
-  display: none;
+  display: inline-block;
+}
+
+button.side-heading {
+  width: 100%;
+  margin: 14px 0 6px;
+  padding: 4px 2px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #3e534c;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .pair {
@@ -709,13 +723,23 @@ h1 {
 .pair > button,
 .pair > a,
 .pair > label {
-  width: 168px;
+  width: auto;
+  white-space: nowrap;
   text-align: center;
 }
 
-.rate-row > button {
-  width: 148px;
-  text-align: center;
+button.danger-fill {
+  background: #b43333;
+  border-color: #b43333;
+  color: #fff7f7;
+}
+
+#theme-toggle {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
 }
 
 .title-form,
@@ -724,14 +748,20 @@ h1 {
   max-width: 100%;
 }
 
-.study-launch {
+.study-actions {
   margin-top: 22px;
 }
 
 .composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: stretch;
   text-align: left;
   gap: 18px;
+}
+
+.composer > .pair {
+  grid-column: 1 / -1;
 }
 
 .composer-face {
@@ -888,11 +918,16 @@ html[data-theme="dark"] .confirm {
   color: #f8e7e1;
 }
 
-@media (max-width: 800px) {
-  .nav-toggle {
-    display: inline-block;
+@media (min-width: 801px) {
+  .app-shell:not(.nav-open) .sidebar {
+    width: 0;
+    padding: 0;
+    overflow: hidden;
+    border-right: 0;
   }
+}
 
+@media (max-width: 800px) {
   .top-links {
     display: none;
   }

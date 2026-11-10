@@ -11,11 +11,11 @@ import { StudyPage } from './pages/StudyPage.tsx'
 
 function Shell() {
   const location = useLocation()
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(true)
   const [menuPath, setMenuPath] = useState(location.pathname)
   if (menuPath !== location.pathname) {
     setMenuPath(location.pathname)
-    setMenuOpen(false)
+    if (window.innerWidth < 800) setMenuOpen(false)
   }
 
   return (

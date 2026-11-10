@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import { collection, limit, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../lib/firebase.ts'
@@ -10,6 +11,23 @@ type SideDeck = {
   id: string
   title: string
   ownerId: string
+}
+
+function SideSection({ title, children }: { title: string; children: ReactNode }) {
+  const [open, setOpen] = useState(true)
+  return (
+    <section>
+      <button
+        type="button"
+        className="side-heading"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        {open ? '▾' : '▸'} {title}
+      </button>
+      {open ? children : null}
+    </section>
+  )
 }
 
 export function Sidebar({ open }: { open: boolean }) {
@@ -71,8 +89,7 @@ export function Sidebar({ open }: { open: boolean }) {
   return (
     <aside className={open ? 'sidebar open' : 'sidebar'}>
       <nav>
-        <section>
-          <h2>Your decks</h2>
+        <SideSection title="Your decks">
           {yourDecks.length === 0 ? (
             <p className="status">No decks yet.</p>
           ) : (
@@ -89,9 +106,8 @@ export function Sidebar({ open }: { open: boolean }) {
               ))}
             </ul>
           )}
-        </section>
-        <section>
-          <h2>Examples</h2>
+        </SideSection>
+        <SideSection title="Examples">
           <ul>
             {examples.map((deck) => (
               <li key={deck.id}>
@@ -104,9 +120,8 @@ export function Sidebar({ open }: { open: boolean }) {
               </li>
             ))}
           </ul>
-        </section>
-        <section>
-          <h2>From others</h2>
+        </SideSection>
+        <SideSection title="From others">
           {othersNote ? <p className="status">{othersNote}</p> : null}
           {otherDecks.length === 0 ? (
             <p className="status">No public decks yet.</p>
@@ -124,7 +139,7 @@ export function Sidebar({ open }: { open: boolean }) {
               ))}
             </ul>
           )}
-        </section>
+        </SideSection>
       </nav>
     </aside>
   )
