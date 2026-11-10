@@ -274,7 +274,7 @@ export function StudyPage() {
               setRevealed(true)
             }}
           >
-            <span className={`flip-inner${flipped ? ' is-flipped' : ''}`}>
+            <span key={card.id} className={`flip-inner${flipped ? ' is-flipped' : ''}`}>
               <span className={`study-card flip-face is-${orientation} is-front`}>
                 <span className="card-kicker">Front</span>
                 {card.frontImage ? <img className="card-photo" alt="" src={card.frontImage} /> : null}
