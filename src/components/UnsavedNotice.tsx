@@ -4,7 +4,7 @@ export function UnsavedNotice() {
   return (
     <aside className="unsaved">
       <p>
-        <strong>This deck will disappear</strong> unless you create an account.
+        <strong>This deck will disappear.</strong> Create an account to save your deck.
       </p>
       <Link className="account-link" to="/account">
         Create an account
