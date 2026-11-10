@@ -1171,8 +1171,19 @@ html[data-theme="dark"] .composer-face.is-back textarea {
 html[data-theme="dark"] .index-card,
 html[data-theme="dark"] .home-pick,
 html[data-theme="dark"] .deck-tile,
-html[data-theme="dark"] .study-card {
+html[data-theme="dark"] .study-card,
+html[data-theme="dark"] .sketch canvas {
+  background: #cfc3ab;
+  border-color: #b5a68a;
   color: #1b2830;
+}
+
+html[data-theme="dark"] .study-card.is-front {
+  border-top-color: #e23d3d;
+}
+
+html[data-theme="dark"] .study-card.is-back {
+  border-top-color: #2a62a0;
 }
 
 html[data-theme="dark"] .deck-tile .status,
