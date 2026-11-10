@@ -293,25 +293,6 @@ export function StudyPage() {
           <p className="status">
             {title} · {index + 1} of {queue.length}
           </p>
-          <div className="study-direction">
-            <p className="option-label">Study direction:</p>
-            <div className="pair equal-pair">
-              <button
-                type="button"
-                className={backFirst ? 'secondary' : ''}
-                onClick={() => chooseDirection(false)}
-              >
-                Front first
-              </button>
-              <button
-                type="button"
-                className={backFirst ? '' : 'secondary'}
-                onClick={() => chooseDirection(true)}
-              >
-                Back first
-              </button>
-            </div>
-          </div>
           <div className={`flip-scene is-${orientation}`}>
           <button
             type="button"
@@ -350,6 +331,25 @@ export function StudyPage() {
               </button>
             </div>
           ) : null}
+          <div className="study-direction">
+            <p className="option-label">Study direction:</p>
+            <div className="pair equal-pair">
+              <button
+                type="button"
+                className={backFirst ? 'secondary' : ''}
+                onClick={() => chooseDirection(false)}
+              >
+                Front first
+              </button>
+              <button
+                type="button"
+                className={backFirst ? '' : 'secondary'}
+                onClick={() => chooseDirection(true)}
+              >
+                Back first
+              </button>
+            </div>
+          </div>
         </>
       ) : null}
     </main>
