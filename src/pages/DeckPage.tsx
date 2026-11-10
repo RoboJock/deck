@@ -382,6 +382,20 @@ export function DeckPage() {
                 For anyone
               </button>
             </div>
+            {deck.visibility === 'public' ? (
+              <p className="status deck-note">
+                {guest
+                  ? 'Anyone can open this deck after you save it to an account. Until then, it still disappears with this browser.'
+                  : 'Anyone with the link can flip these cards.'}{' '}
+                {guest ? null : (
+                  <button type="button" className="text" onClick={copyLink}>
+                    Copy link
+                  </button>
+                )}
+              </p>
+            ) : (
+              <p className="status deck-note">Only you can open this deck.</p>
+            )}
             <div className="pair">
               <button
                 type="button"
@@ -400,20 +414,6 @@ export function DeckPage() {
                 Horizontal
               </button>
             </div>
-            {deck.visibility === 'public' ? (
-              <p className="status deck-note">
-                {guest
-                  ? 'Anyone can open this deck after you save it to an account. Until then, it still disappears with this browser.'
-                  : 'Anyone with the link can flip these cards.'}{' '}
-                {guest ? null : (
-                  <button type="button" className="text" onClick={copyLink}>
-                    Copy link
-                  </button>
-                )}
-              </p>
-            ) : (
-              <p className="status deck-note">Only you can open this deck.</p>
-            )}
             {notice ? <p className="status">{notice}</p> : null}
             <div className="study-actions">
               <div className="pair">
