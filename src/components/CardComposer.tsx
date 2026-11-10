@@ -30,7 +30,7 @@ export function CardComposer({
     && (back.text.trim().length > 0 || back.image.length > 0)
 
   return (
-    <form className="index-card composer" onSubmit={onSubmit}>
+    <form className="composer" onSubmit={onSubmit}>
       <FaceEditor label="Front" face={front} onChange={onFront} />
       <FaceEditor label="Back" face={back} onChange={onBack} />
       <div className="pair">
@@ -71,7 +71,7 @@ function FaceEditor({
   }
 
   return (
-    <div className={`composer-face is-${side}`}>
+    <div className={`index-card composer-face is-${side}`}>
       <p className="card-kicker">{label}</p>
       {face.image ? <img className="card-photo" alt="" src={face.image} /> : null}
       <textarea

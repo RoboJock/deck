@@ -401,7 +401,7 @@ export function DeckPage() {
               </button>
             </div>
             {deck.visibility === 'public' ? (
-              <p className="status">
+              <p className="status deck-note">
                 {guest
                   ? 'Anyone can open this deck after you save it to an account. Until then, it still disappears with this browser.'
                   : 'Anyone with the link can flip these cards.'}{' '}
@@ -412,7 +412,7 @@ export function DeckPage() {
                 )}
               </p>
             ) : (
-              <p className="status">Only you can open this deck.</p>
+              <p className="status deck-note">Only you can open this deck.</p>
             )}
             {notice ? <p className="status">{notice}</p> : null}
             <div className="study-actions">
