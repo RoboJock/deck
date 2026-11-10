@@ -295,6 +295,7 @@ a {
   margin-right: 4px;
   padding-right: 16px;
   border-right: 1px solid #c5ddd3;
+  white-space: nowrap;
 }
 
 .wrap {

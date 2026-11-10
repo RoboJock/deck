@@ -23,7 +23,7 @@ export function Header() {
     <header className="top">
       <div className="top-start">
         <NavLink to="/" className="brand">
-          Deck
+          Study Deck
         </NavLink>
         <nav className="top-links">
           <NavLink to="/" end className={({ isActive }) => (isActive ? 'top-link active' : 'top-link')}>
