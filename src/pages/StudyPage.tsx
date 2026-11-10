@@ -12,6 +12,28 @@ import type { CardRecord, Orientation, Visibility } from '../types.ts'
 
 type Rating = 'got' | 'unsure' | 'again'
 
+function StudyFace({
+  side,
+  rear,
+  orientation,
+  text,
+  image,
+}: {
+  side: 'front' | 'back'
+  rear: boolean
+  orientation: Orientation
+  text: string
+  image: string
+}) {
+  return (
+    <span className={`study-card flip-face is-${orientation} is-${side}${rear ? ' is-rear' : ''}`}>
+      <span className="card-kicker">{side === 'front' ? 'Front' : 'Back'}</span>
+      {image ? <img className="card-photo" alt="" src={image} /> : null}
+      <span className={`study-text${side === 'front' ? ' face-front' : ''}`}>{text}</span>
+    </span>
+  )
+}
+
 export function StudyPage() {
   const { deckId = '' } = useParams()
   const { user } = useAuth()
@@ -26,6 +48,7 @@ export function StudyPage() {
   const [queue, setQueue] = useState<string[]>([])
   const [index, setIndex] = useState(0)
   const [flipped, setFlipped] = useState(false)
+  const [backFirst, setBackFirst] = useState(false)
   const [revealed, setRevealed] = useState(false)
   const [ratings, setRatings] = useState<Record<string, Rating>>({})
   const [roundIds, setRoundIds] = useState<string[]>([])
@@ -211,6 +234,12 @@ export function StudyPage() {
     setRevealed(false)
   }
 
+  function chooseDirection(nextBackFirst: boolean) {
+    setBackFirst(nextBackFirst)
+    setFlipped(false)
+    setRevealed(false)
+  }
+
   function count(value: Rating) {
     return roundIds.filter((id) => ratings[id] === value).length
   }
@@ -264,27 +293,47 @@ export function StudyPage() {
           <p className="status">
             {title} · {index + 1} of {queue.length}
           </p>
+          <div className="study-direction">
+            <p className="option-label">Study direction:</p>
+            <div className="pair equal-pair">
+              <button
+                type="button"
+                className={backFirst ? 'secondary' : ''}
+                onClick={() => chooseDirection(false)}
+              >
+                Front first
+              </button>
+              <button
+                type="button"
+                className={backFirst ? '' : 'secondary'}
+                onClick={() => chooseDirection(true)}
+              >
+                Back first
+              </button>
+            </div>
+          </div>
           <div className={`flip-scene is-${orientation}`}>
           <button
             type="button"
             className="flip-card"
-            aria-label={`${flipped ? 'Back' : 'Front'} of the card. Click to flip.`}
+            aria-label={`${backFirst === flipped ? 'Front' : 'Back'} of the card. Click to flip.`}
             onClick={() => {
               setFlipped((current) => !current)
               setRevealed(true)
             }}
           >
-            <span key={card.id} className={`flip-inner${flipped ? ' is-flipped' : ''}`}>
-              <span className={`study-card flip-face is-${orientation} is-front`}>
-                <span className="card-kicker">Front</span>
-                {card.frontImage ? <img className="card-photo" alt="" src={card.frontImage} /> : null}
-                <span className="study-text face-front">{card.front}</span>
-              </span>
-              <span className={`study-card flip-face is-${orientation} is-back`}>
-                <span className="card-kicker">Back</span>
-                {card.backImage ? <img className="card-photo" alt="" src={card.backImage} /> : null}
-                <span className="study-text">{card.back}</span>
-              </span>
+            <span key={`${card.id}-${backFirst ? 'back' : 'front'}`} className={`flip-inner${flipped ? ' is-flipped' : ''}`}>
+              {backFirst ? (
+                <>
+                  <StudyFace side="back" rear={false} orientation={orientation} text={card.back} image={card.backImage} />
+                  <StudyFace side="front" rear orientation={orientation} text={card.front} image={card.frontImage} />
+                </>
+              ) : (
+                <>
+                  <StudyFace side="front" rear={false} orientation={orientation} text={card.front} image={card.frontImage} />
+                  <StudyFace side="back" rear orientation={orientation} text={card.back} image={card.backImage} />
+                </>
+              )}
             </span>
           </button>
           </div>

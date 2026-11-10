@@ -222,6 +222,17 @@ a {
   color: #0f6b4c;
 }
 
+.study-direction {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.study-direction .option-label {
+  margin: 0;
+}
+
 .study-screen {
   flex: 1;
   display: flex;
@@ -734,7 +745,7 @@ button.flip-card {
   -webkit-backface-visibility: hidden;
 }
 
-.flip-face.is-back {
+.flip-face.is-rear {
   position: absolute;
   inset: 0;
   transform: rotateY(180deg);
@@ -965,7 +976,8 @@ button.danger-fill {
   font-weight: 400;
 }
 
-.option-group .equal-pair {
+.option-group .equal-pair,
+.study-direction .equal-pair {
   display: inline-grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
