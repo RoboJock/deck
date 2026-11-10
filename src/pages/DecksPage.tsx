@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import {
   addDoc,
   collection,
@@ -140,35 +140,10 @@ export function DecksPage() {
             {error}
           </p>
         ) : null}
-        {visibleGuestDecks.length === 0 && decks.length === 0 ? (
-          <p className="status">No decks yet.</p>
-        ) : (
-          <ul className="deck-list">
-            {visibleGuestDecks.map((deck) => (
-              <li key={deck.id}>
-                <Link className="deck-tile" to={`/decks/${deck.id}`}>
-                  <strong>{deck.title}</strong>
-                  <span className="status">
-                    Not saved · {deck.cards.length}{' '}
-                    {deck.cards.length === 1 ? 'card' : 'cards'}
-                  </span>
-                </Link>
-              </li>
-            ))}
-            {decks.map((deck) => (
-              <li key={deck.id}>
-                <Link className="deck-tile" to={`/decks/${deck.id}`}>
-                  <strong>{deck.title}</strong>
-                  <span className="status">
-                    {deck.visibility === 'public' ? 'For anyone' : 'For you'}
-                    {' · '}
-                    {deck.cardCount} {deck.cardCount === 1 ? 'card' : 'cards'}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+        <p className="status">
+          Your decks and public decks from other people are in the sidebar.
+          {visibleGuestDecks.length + decks.length === 0 ? ' No decks yet.' : ''}
+        </p>
       </main>
     </div>
   )

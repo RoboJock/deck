@@ -27,7 +27,6 @@ import {
 } from '../lib/guestDecks.ts'
 import { useAuth } from '../useAuth.ts'
 import { Header } from '../components/Header.tsx'
-import { StudyCards } from '../components/StudyCards.tsx'
 import { UnsavedNotice } from '../components/UnsavedNotice.tsx'
 import type { CardRecord, DeckRecord, Visibility } from '../types.ts'
 
@@ -39,7 +38,6 @@ export function DeckPage() {
   const [deck, setDeck] = useState<DeckRecord | null>(null)
   const [missing, setMissing] = useState(false)
   const [cards, setCards] = useState<CardRecord[]>([])
-  const [mode, setMode] = useState<'create' | 'study'>('create')
   const [title, setTitle] = useState('')
   const [front, setFront] = useState('')
   const [back, setBack] = useState('')
@@ -298,9 +296,6 @@ export function DeckPage() {
     <div className="frame">
       <Header />
       <main className="wrap">
-        <Link className="text back" to="/">
-          All decks
-        </Link>
         {needsSignIn ? (
           <>
             <h1>Sign in to open this deck</h1>
@@ -364,27 +359,10 @@ export function DeckPage() {
               <p className="status">Only you can open this deck.</p>
             )}
             {notice ? <p className="status">{notice}</p> : null}
-            <div className="choices">
-              <button
-                type="button"
-                className={mode === 'create' ? '' : 'secondary'}
-                onClick={() => setMode('create')}
-              >
-                Create
-              </button>
-              <button
-                type="button"
-                className={mode === 'study' ? '' : 'secondary'}
-                onClick={() => setMode('study')}
-              >
-                Study
-              </button>
-            </div>
-            {mode === 'study' ? (
-              <StudyCards cards={cards} />
-            ) : (
-              <>
-                <form className="stack" onSubmit={addCard}>
+            <Link className="account-link" to={`/study/${deck.id}`}>
+              Study this deck
+            </Link>
+            <form className="stack" onSubmit={addCard}>
                   <label>
                     Front
                     <textarea
@@ -490,8 +468,6 @@ export function DeckPage() {
                     ))}
                   </ul>
                 )}
-              </>
-            )}
             <button type="button" className="text danger-text" disabled={pending} onClick={removeDeck}>
               Delete deck
             </button>

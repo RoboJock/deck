@@ -125,9 +125,139 @@ a {
   gap: 16px;
   width: 100%;
   margin: 0 0 32px;
-  padding: 14px max(20px, calc((100% - 920px) / 2));
+  padding: 14px 20px;
   background: #f4faf7;
   border-bottom: 1px solid #c5ddd3;
+}
+
+.app-shell {
+  display: flex;
+  align-items: stretch;
+  min-height: 100vh;
+}
+
+.app-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar {
+  flex: none;
+  width: auto;
+  background: #f7fbf9;
+  border-right: 1px solid #c5ddd3;
+  padding: 14px 12px;
+}
+
+.sidebar.open {
+  width: 280px;
+  padding: 16px 16px 28px;
+}
+
+.sidebar-toggle {
+  width: auto;
+  white-space: nowrap;
+}
+
+.sidebar.open .sidebar-toggle {
+  width: 100%;
+}
+
+.sidebar-body h2 {
+  margin: 22px 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #3e534c;
+}
+
+.sidebar-body ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.side-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.side-link,
+.side-study {
+  color: #1b2830;
+  text-decoration: none;
+}
+
+.side-link {
+  font-weight: 650;
+}
+
+.side-link.active {
+  color: #0f6b4c;
+}
+
+.side-study {
+  flex: none;
+  font-size: 13px;
+  color: #0f6b4c;
+}
+
+.study-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 40px 24px 56px;
+  text-align: center;
+}
+
+.study-screen .study-card {
+  width: min(640px, 100%);
+}
+
+.study-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: min(560px, 100%);
+}
+
+.study-done .lede {
+  margin: 0;
+}
+
+.rate-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.rate-got {
+  background: #1b7a43;
+  border-color: #1b7a43;
+  color: #f4fff8;
+}
+
+.rate-unsure {
+  background: #fffdf8;
+  border-color: #c4a15a;
+  color: #6a5420;
+}
+
+.rate-again {
+  background: #b43333;
+  border-color: #b43333;
+  color: #fff7f7;
 }
 
 .brand {
@@ -355,6 +485,24 @@ h1 {
 }
 
 @media (max-width: 720px) {
+  .sidebar {
+    position: fixed;
+    z-index: 5;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    border-right: 0;
+    background: transparent;
+  }
+
+  .sidebar.open {
+    width: min(300px, 88vw);
+    background: #f7fbf9;
+    border-right: 1px solid #c5ddd3;
+    box-shadow: 8px 0 0 #e7f3ee;
+  }
+
   .split {
     grid-template-columns: 1fr;
   }
