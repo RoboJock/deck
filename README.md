@@ -2,6 +2,8 @@
 
 Flashcards on Firebase Authentication, Cloud Firestore, and Firebase Hosting.
 
+A deck can be made without an account. It stays in the browser until an account saves it.
+
 The Firebase project id is `flashcard-project-2ca2e`.
 
 ## Run locally

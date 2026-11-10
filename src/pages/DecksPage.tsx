@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   addDoc,
   collection,
@@ -9,26 +9,50 @@ import {
   serverTimestamp,
   where,
 } from 'firebase/firestore'
-import { signOut } from 'firebase/auth'
-import { auth, db } from '../lib/firebase.ts'
+import { db } from '../lib/firebase.ts'
 import { explain } from '../lib/errors.ts'
+import {
+  createGuestDeck,
+  listGuestDecks,
+  migrateGuestDecks,
+  subscribeGuestDecks,
+} from '../lib/guestDecks.ts'
 import { useAuth } from '../useAuth.ts'
+import { Header } from '../components/Header.tsx'
+import { UnsavedNotice } from '../components/UnsavedNotice.tsx'
 import type { DeckRecord, Visibility } from '../types.ts'
 
 export function DecksPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [decks, setDecks] = useState<DeckRecord[]>([])
+  const [guestDecks, setGuestDecks] = useState(listGuestDecks())
   const [title, setTitle] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+
+  useEffect(() => subscribeGuestDecks(() => setGuestDecks(listGuestDecks())), [])
 
   useEffect(() => {
     if (!user) return
-    const decksQuery = query(
-      collection(db, 'decks'),
-      where('ownerId', '==', user.uid),
-    )
-    return onSnapshot(
+    let cancelled = false
+    migrateGuestDecks(user.uid)
+      .then((count) => {
+        if (!cancelled && count > 0) {
+          setNotice(
+            count === 1
+              ? 'Saved 1 deck from this browser to your account.'
+              : `Saved ${count} decks from this browser to your account.`,
+          )
+        }
+      })
+      .catch((caught) => {
+        if (!cancelled) setError(explain(caught))
+      })
+
+    const decksQuery = query(collection(db, 'decks'), where('ownerId', '==', user.uid))
+    const unsubscribe = onSnapshot(
       decksQuery,
       (snapshot) => {
         const next = snapshot.docs.map((item) => {
@@ -42,34 +66,38 @@ export function DecksPage() {
             createdAt: data.createdAt ?? null,
           }
         })
-        next.sort((a, b) => {
-          const aTime = a.createdAt?.toMillis() ?? 0
-          const bTime = b.createdAt?.toMillis() ?? 0
-          return bTime - aTime
-        })
+        next.sort((a, b) => (b.createdAt?.toMillis() ?? 0) - (a.createdAt?.toMillis() ?? 0))
         setDecks(next)
         setError(null)
       },
       (caught) => setError(explain(caught)),
     )
+    return () => {
+      cancelled = true
+      unsubscribe()
+    }
   }, [user])
 
   async function onCreate(event: FormEvent) {
     event.preventDefault()
-    if (!user) return
     const trimmed = title.trim()
     if (!trimmed) return
     setPending(true)
     setError(null)
     try {
-      await addDoc(collection(db, 'decks'), {
+      if (!user) {
+        const deck = createGuestDeck(trimmed)
+        navigate(`/decks/${deck.id}`)
+        return
+      }
+      const ref = await addDoc(collection(db, 'decks'), {
         ownerId: user.uid,
         title: trimmed,
         visibility: 'private',
         cardCount: 0,
         createdAt: serverTimestamp(),
       })
-      setTitle('')
+      navigate(`/decks/${ref.id}`)
     } catch (caught) {
       setError(explain(caught))
     } finally {
@@ -77,23 +105,22 @@ export function DecksPage() {
     }
   }
 
+  const visibleGuestDecks = user ? [] : guestDecks
+
   return (
-    <>
-      <header className="top">
-        <Link to="/decks" className="brand">
-          Deck
-        </Link>
-        <div className="row tight">
-          <span className="status">{user?.email}</span>
-          <button type="button" className="secondary" onClick={() => signOut(auth)}>
-            Sign out
-          </button>
-        </div>
-      </header>
+    <div className="frame">
+      <Header />
       <main className="wrap">
-        <h1>Your decks</h1>
-        <form className="create" onSubmit={onCreate}>
-          <label className="grow">
+        <h1>{user ? 'Your decks' : 'Make a deck'}</h1>
+        <p className="lede">
+          {user
+            ? 'Decks saved to your account stay here when you come back.'
+            : 'Start now. An account is only needed when you want to keep the deck.'}
+        </p>
+        {user ? null : <UnsavedNotice />}
+        {notice ? <p className="saved">{notice}</p> : null}
+        <form className="stack" onSubmit={onCreate}>
+          <label>
             New deck
             <input
               value={title}
@@ -111,28 +138,36 @@ export function DecksPage() {
             {error}
           </p>
         ) : null}
-        {decks.length === 0 ? (
-          <p className="status">No decks yet. Create one to add cards.</p>
+        {visibleGuestDecks.length === 0 && decks.length === 0 ? (
+          <p className="status">No decks yet.</p>
         ) : (
           <ul className="deck-list">
+            {visibleGuestDecks.map((deck) => (
+              <li key={deck.id}>
+                <Link className="deck-tile" to={`/decks/${deck.id}`}>
+                  <strong>{deck.title}</strong>
+                  <span className="status">
+                    Not saved · {deck.cards.length}{' '}
+                    {deck.cards.length === 1 ? 'card' : 'cards'}
+                  </span>
+                </Link>
+              </li>
+            ))}
             {decks.map((deck) => (
               <li key={deck.id}>
-                <Link className="deck-row" to={`/decks/${deck.id}`}>
-                  <span>
-                    <strong>{deck.title}</strong>
-                    <span className="status">
-                      {deck.visibility === 'public' ? 'Public' : 'Private'}
-                      {' · '}
-                      {deck.cardCount} {deck.cardCount === 1 ? 'card' : 'cards'}
-                    </span>
+                <Link className="deck-tile" to={`/decks/${deck.id}`}>
+                  <strong>{deck.title}</strong>
+                  <span className="status">
+                    {deck.visibility === 'public' ? 'For anyone' : 'For you'}
+                    {' · '}
+                    {deck.cardCount} {deck.cardCount === 1 ? 'card' : 'cards'}
                   </span>
-                  <span className="status">Open</span>
                 </Link>
               </li>
             ))}
           </ul>
         )}
       </main>
-    </>
+    </div>
   )
 }

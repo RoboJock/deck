@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { Header } from '../components/Header.tsx'
 import { FirebaseError } from 'firebase/app'
 import { collection, doc, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../lib/firebase.ts'
@@ -81,18 +82,16 @@ export function PublicDeckPage() {
   const ownsDeck = user && deck && user.uid === deck.ownerId
 
   return (
-    <>
-      <header className="top">
-        <Link to={user ? '/decks' : '/'} className="brand">
-          Deck
-        </Link>
-        {ownsDeck ? (
-          <Link className="text" to={`/decks/${deckId}`}>
-            Edit this deck
-          </Link>
-        ) : null}
-      </header>
+    <div className="frame">
+      <Header />
       <main className="wrap">
+        {ownsDeck ? (
+          <p className="status">
+            <Link className="text" to={`/decks/${deckId}`}>
+              Edit this deck
+            </Link>
+          </p>
+        ) : null}
         {blocked || !deck ? (
           <>
             <h1>Deck</h1>
@@ -106,6 +105,6 @@ export function PublicDeckPage() {
           </>
         )}
       </main>
-    </>
+    </div>
   )
 }

@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { signOut } from 'firebase/auth'
 import {
   collection,
   deleteDoc,
@@ -13,29 +12,90 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore'
-import { auth, db } from '../lib/firebase.ts'
+import { db } from '../lib/firebase.ts'
 import { explain } from '../lib/errors.ts'
 import { deleteEach, updateEach } from '../lib/batch.ts'
+import {
+  addGuestCard,
+  deleteGuestCard,
+  deleteGuestDeck,
+  getGuestDeck,
+  isGuestDeckId,
+  subscribeGuestDecks,
+  updateGuestCard,
+  updateGuestDeck,
+} from '../lib/guestDecks.ts'
 import { useAuth } from '../useAuth.ts'
+import { Header } from '../components/Header.tsx'
 import { StudyCards } from '../components/StudyCards.tsx'
+import { UnsavedNotice } from '../components/UnsavedNotice.tsx'
 import type { CardRecord, DeckRecord, Visibility } from '../types.ts'
 
 export function DeckPage() {
   const { deckId = '' } = useParams()
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, ready } = useAuth()
+  const guest = isGuestDeckId(deckId)
   const [deck, setDeck] = useState<DeckRecord | null>(null)
   const [missing, setMissing] = useState(false)
   const [cards, setCards] = useState<CardRecord[]>([])
-  const [mode, setMode] = useState<'edit' | 'study'>('edit')
+  const [mode, setMode] = useState<'create' | 'study'>('create')
   const [title, setTitle] = useState('')
   const [front, setFront] = useState('')
   const [back, setBack] = useState('')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editFront, setEditFront] = useState('')
+  const [editBack, setEditBack] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+  const syncedTitle = useRef<string | null>(null)
+
+  function rememberTitle(nextTitle: string) {
+    if (syncedTitle.current === nextTitle) return
+    syncedTitle.current = nextTitle
+    setTitle(nextTitle)
+  }
 
   useEffect(() => {
+    if (!guest) return
+    const pull = () => {
+      const found = getGuestDeck(deckId)
+      if (!found) {
+        setDeck(null)
+        setCards([])
+        setMissing(true)
+        return
+      }
+      setMissing(false)
+      setDeck({
+        id: found.id,
+        ownerId: '',
+        title: found.title,
+        visibility: found.visibility,
+        cardCount: found.cards.length,
+        createdAt: null,
+      })
+      rememberTitle(found.title)
+      setCards(
+        found.cards
+          .map((card) => ({
+            id: card.id,
+            ownerId: '',
+            visibility: found.visibility,
+            front: card.front,
+            back: card.back,
+            order: card.order,
+          }))
+          .sort((a, b) => a.order - b.order),
+      )
+    }
+    pull()
+    return subscribeGuestDecks(pull)
+  }, [deckId, guest])
+
+  useEffect(() => {
+    if (guest || !user) return
     const deckRef = doc(db, 'decks', deckId)
     return onSnapshot(
       deckRef,
@@ -46,24 +106,24 @@ export function DeckPage() {
           return
         }
         const data = snapshot.data()
-        const next: DeckRecord = {
+        const nextTitle = String(data.title ?? '')
+        setDeck({
           id: snapshot.id,
           ownerId: String(data.ownerId ?? ''),
-          title: String(data.title ?? ''),
+          title: nextTitle,
           visibility: data.visibility === 'public' ? 'public' : 'private',
           cardCount: Number(data.cardCount ?? 0),
           createdAt: data.createdAt ?? null,
-        }
-        setDeck(next)
-        setTitle(next.title)
+        })
+        rememberTitle(nextTitle)
         setMissing(false)
       },
       (caught) => setError(explain(caught)),
     )
-  }, [deckId])
+  }, [deckId, guest, user])
 
   useEffect(() => {
-    if (!user) return
+    if (guest || !user) return
     const cardsQuery = query(
       collection(db, 'decks', deckId, 'cards'),
       where('ownerId', '==', user.uid),
@@ -88,7 +148,7 @@ export function DeckPage() {
       },
       (caught) => setError(explain(caught)),
     )
-  }, [deckId, user])
+  }, [deckId, guest, user])
 
   async function saveTitle(event: FormEvent) {
     event.preventDefault()
@@ -97,7 +157,8 @@ export function DeckPage() {
     setPending(true)
     setError(null)
     try {
-      await updateDoc(doc(db, 'decks', deck.id), { title: trimmed })
+      if (guest) updateGuestDeck(deck.id, { title: trimmed })
+      else await updateDoc(doc(db, 'decks', deck.id), { title: trimmed })
     } catch (caught) {
       setError(explain(caught))
     } finally {
@@ -110,10 +171,12 @@ export function DeckPage() {
     setPending(true)
     setError(null)
     try {
-      const refs = cards.map((card) => card.ref)
+      if (guest) {
+        updateGuestDeck(deck.id, { visibility: next })
+        return
+      }
+      const refs = cards.flatMap((card) => (card.ref ? [card.ref] : []))
       const deckRef = doc(db, 'decks', deck.id)
-      // Cards may only be public while the deck is public, so the writes
-      // have to happen in that order.
       if (next === 'private') {
         await updateEach(refs, { visibility: 'private' })
         await updateDoc(deckRef, { visibility: 'private' })
@@ -130,26 +193,49 @@ export function DeckPage() {
 
   async function addCard(event: FormEvent) {
     event.preventDefault()
-    if (!user || !deck) return
+    if (!deck) return
     const trimmedFront = front.trim()
     const trimmedBack = back.trim()
     if (!trimmedFront || !trimmedBack) return
     setPending(true)
     setError(null)
     try {
-      const cardRef = doc(collection(db, 'decks', deck.id, 'cards'))
-      const batch = writeBatch(db)
-      batch.set(cardRef, {
-        ownerId: user.uid,
-        visibility: deck.visibility,
-        front: trimmedFront,
-        back: trimmedBack,
-        order: Date.now(),
-      })
-      batch.update(doc(db, 'decks', deck.id), { cardCount: increment(1) })
-      await batch.commit()
+      if (guest) {
+        addGuestCard(deck.id, trimmedFront, trimmedBack)
+      } else if (user) {
+        const cardRef = doc(collection(db, 'decks', deck.id, 'cards'))
+        const batch = writeBatch(db)
+        batch.set(cardRef, {
+          ownerId: user.uid,
+          visibility: deck.visibility,
+          front: trimmedFront,
+          back: trimmedBack,
+          order: Date.now(),
+        })
+        batch.update(doc(db, 'decks', deck.id), { cardCount: increment(1) })
+        await batch.commit()
+      }
       setFront('')
       setBack('')
+    } catch (caught) {
+      setError(explain(caught))
+    } finally {
+      setPending(false)
+    }
+  }
+
+  async function saveCard(event: FormEvent) {
+    event.preventDefault()
+    const card = cards.find((item) => item.id === editingId)
+    const trimmedFront = editFront.trim()
+    const trimmedBack = editBack.trim()
+    if (!deck || !card || !trimmedFront || !trimmedBack) return
+    setPending(true)
+    setError(null)
+    try {
+      if (guest) updateGuestCard(deck.id, card.id, trimmedFront, trimmedBack)
+      else if (card.ref) await updateDoc(card.ref, { front: trimmedFront, back: trimmedBack })
+      setEditingId(null)
     } catch (caught) {
       setError(explain(caught))
     } finally {
@@ -162,10 +248,15 @@ export function DeckPage() {
     setPending(true)
     setError(null)
     try {
-      const batch = writeBatch(db)
-      batch.delete(card.ref)
-      batch.update(doc(db, 'decks', deck.id), { cardCount: increment(-1) })
-      await batch.commit()
+      if (guest) {
+        deleteGuestCard(deck.id, card.id)
+      } else if (card.ref) {
+        const batch = writeBatch(db)
+        batch.delete(card.ref)
+        batch.update(doc(db, 'decks', deck.id), { cardCount: increment(-1) })
+        await batch.commit()
+      }
+      if (editingId === card.id) setEditingId(null)
     } catch (caught) {
       setError(explain(caught))
     } finally {
@@ -179,9 +270,12 @@ export function DeckPage() {
     setPending(true)
     setError(null)
     try {
-      await deleteEach(cards.map((card) => card.ref))
-      await deleteDoc(doc(db, 'decks', deck.id))
-      navigate('/decks')
+      if (guest) deleteGuestDeck(deck.id)
+      else {
+        await deleteEach(cards.flatMap((card) => (card.ref ? [card.ref] : [])))
+        await deleteDoc(doc(db, 'decks', deck.id))
+      }
+      navigate('/')
     } catch (caught) {
       setError(explain(caught))
       setPending(false)
@@ -198,28 +292,30 @@ export function DeckPage() {
     }
   }
 
+  const needsSignIn = ready && !user && !guest
+
   return (
-    <>
-      <header className="top">
-        <Link to="/decks" className="brand">
-          Deck
-        </Link>
-        <div className="row tight">
-          <span className="status">{user?.email}</span>
-          <button type="button" className="secondary" onClick={() => signOut(auth)}>
-            Sign out
-          </button>
-        </div>
-      </header>
+    <div className="frame">
+      <Header />
       <main className="wrap">
-        <Link className="text back" to="/decks">
+        <Link className="text back" to="/">
           All decks
         </Link>
+        {needsSignIn ? (
+          <>
+            <h1>Sign in to open this deck</h1>
+            <p className="lede">Saved decks belong to an account.</p>
+            <Link className="account-link" to="/account">
+              Sign in
+            </Link>
+          </>
+        ) : null}
         {missing ? <h1>This deck no longer exists.</h1> : null}
+        {guest ? <UnsavedNotice /> : null}
         {deck ? (
           <>
-            <form className="create" onSubmit={saveTitle}>
-              <label className="grow">
+            <form className="stack" onSubmit={saveTitle}>
+              <label>
                 Title
                 <input
                   value={title}
@@ -235,47 +331,46 @@ export function DeckPage() {
                 Save title
               </button>
             </form>
-            <div className="row spread">
-              <div className="row tight">
-                <button
-                  type="button"
-                  className={deck.visibility === 'private' ? '' : 'secondary'}
-                  disabled={pending}
-                  onClick={() => changeVisibility('private')}
-                >
-                  Private
-                </button>
-                <button
-                  type="button"
-                  className={deck.visibility === 'public' ? '' : 'secondary'}
-                  disabled={pending}
-                  onClick={() => changeVisibility('public')}
-                >
-                  Public
-                </button>
-              </div>
-              <button type="button" className="danger" disabled={pending} onClick={removeDeck}>
-                Delete deck
+            <div className="choices">
+              <button
+                type="button"
+                className={deck.visibility === 'private' ? '' : 'secondary'}
+                disabled={pending}
+                onClick={() => changeVisibility('private')}
+              >
+                For you
+              </button>
+              <button
+                type="button"
+                className={deck.visibility === 'public' ? '' : 'secondary'}
+                disabled={pending}
+                onClick={() => changeVisibility('public')}
+              >
+                For anyone
               </button>
             </div>
             {deck.visibility === 'public' ? (
               <p className="status">
-                Anyone with the link can flip these cards.{' '}
-                <button type="button" className="text" onClick={copyLink}>
-                  Copy link
-                </button>
+                {guest
+                  ? 'Anyone can open this deck after you save it to an account. Until then, it still disappears with this browser.'
+                  : 'Anyone with the link can flip these cards.'}{' '}
+                {guest ? null : (
+                  <button type="button" className="text" onClick={copyLink}>
+                    Copy link
+                  </button>
+                )}
               </p>
             ) : (
               <p className="status">Only you can open this deck.</p>
             )}
             {notice ? <p className="status">{notice}</p> : null}
-            <div className="row tight">
+            <div className="choices">
               <button
                 type="button"
-                className={mode === 'edit' ? '' : 'secondary'}
-                onClick={() => setMode('edit')}
+                className={mode === 'create' ? '' : 'secondary'}
+                onClick={() => setMode('create')}
               >
-                Cards
+                Create
               </button>
               <button
                 type="button"
@@ -319,28 +414,87 @@ export function DeckPage() {
                   <p className="status">No cards yet.</p>
                 ) : (
                   <ul className="card-list">
-                    {cards.map((card, index) => (
-                      <li key={card.id} className="card-row">
-                        <span>
-                          <strong>
-                            {index + 1}. {card.front}
-                          </strong>
-                          <span className="status">{card.back}</span>
-                        </span>
-                        <button
-                          type="button"
-                          className="danger"
-                          disabled={pending}
-                          onClick={() => removeCard(card)}
-                        >
-                          Delete
-                        </button>
+                    {cards.map((card) => (
+                      <li key={card.id}>
+                        {editingId === card.id ? (
+                          <form className="index-card" onSubmit={saveCard}>
+                            <label>
+                              Front
+                              <textarea
+                                value={editFront}
+                                maxLength={600}
+                                required
+                                onChange={(event) => setEditFront(event.target.value)}
+                              />
+                            </label>
+                            <label>
+                              Back
+                              <textarea
+                                value={editBack}
+                                maxLength={600}
+                                required
+                                onChange={(event) => setEditBack(event.target.value)}
+                              />
+                            </label>
+                            <div className="choices">
+                              <button
+                                type="submit"
+                                disabled={
+                                  pending ||
+                                  editFront.trim().length === 0 ||
+                                  editBack.trim().length === 0
+                                }
+                              >
+                                Save card
+                              </button>
+                              <button
+                                type="button"
+                                className="secondary"
+                                onClick={() => setEditingId(null)}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </form>
+                        ) : (
+                          <article className="index-card">
+                            <p className="card-kicker">Front</p>
+                            <p className="card-face">{card.front}</p>
+                            <p className="card-kicker">Back</p>
+                            <p className="card-face back-face">{card.back}</p>
+                            <div className="choices">
+                              <button
+                                type="button"
+                                className="secondary"
+                                disabled={pending}
+                                onClick={() => {
+                                  setEditingId(card.id)
+                                  setEditFront(card.front)
+                                  setEditBack(card.back)
+                                }}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                className="danger"
+                                disabled={pending}
+                                onClick={() => removeCard(card)}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </article>
+                        )}
                       </li>
                     ))}
                   </ul>
                 )}
               </>
             )}
+            <button type="button" className="text danger-text" disabled={pending} onClick={removeDeck}>
+              Delete deck
+            </button>
           </>
         ) : null}
         {error ? (
@@ -349,6 +503,6 @@ export function DeckPage() {
           </p>
         ) : null}
       </main>
-    </>
+    </div>
   )
 }

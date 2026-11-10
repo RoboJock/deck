@@ -13,7 +13,7 @@ export type DeckRecord = {
 
 export type CardRecord = {
   id: string
-  ref: DocumentReference
+  ref?: DocumentReference
   ownerId: string
   visibility: Visibility
   front: string

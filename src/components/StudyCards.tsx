@@ -21,10 +21,10 @@ export function StudyCards({ cards }: { cards: CardRecord[] }) {
     <div className="study">
       <button
         type="button"
-        className="study-card"
+        className={`study-card${flipped ? ' is-back' : ''}`}
         onClick={() => setFlipped((current) => !current)}
       >
-        <span className="eyebrow">{flipped ? 'Back' : 'Front'}</span>
+        <span className="card-kicker">{flipped ? 'Back' : 'Front'}</span>
         <span className="study-text">{flipped ? card.back : card.front}</span>
         <span className="hint">Click the card to flip it</span>
       </button>

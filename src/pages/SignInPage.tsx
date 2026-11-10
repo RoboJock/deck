@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from 'firebase/auth'
 import { auth } from '../lib/firebase.ts'
 import { explain } from '../lib/errors.ts'
+import { listGuestDecks } from '../lib/guestDecks.ts'
 import { useAuth } from '../useAuth.ts'
+import { Header } from '../components/Header.tsx'
 
 export function SignInPage() {
   const { user, ready } = useAuth()
@@ -16,8 +18,9 @@ export function SignInPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+  const guestCount = listGuestDecks().length
 
-  if (ready && user) return <Navigate to="/decks" replace />
+  if (ready && user) return <Navigate to="/" replace />
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -37,56 +40,65 @@ export function SignInPage() {
   }
 
   return (
-    <main className="wrap narrow">
-      <p className="eyebrow">Deck</p>
-      <h1>Flashcards you can share</h1>
-      <p className="lede">
-        Make a deck, flip through the cards, and mark a deck public when you
-        want to send someone the link.
-      </p>
-      <form className="stack" onSubmit={onSubmit}>
-        <label>
-          Email
-          <input
-            type="email"
-            autoComplete="email"
-            value={email}
-            required
-            onChange={(event) => setEmail(event.target.value)}
-          />
-        </label>
-        <label>
-          Password
-          <input
-            type="password"
-            autoComplete={mode === 'create' ? 'new-password' : 'current-password'}
-            minLength={6}
-            value={password}
-            required
-            onChange={(event) => setPassword(event.target.value)}
-          />
-        </label>
-        {error ? (
-          <p className="error" role="alert">
-            {error}
-          </p>
-        ) : null}
-        <button type="submit" disabled={pending || !ready}>
-          {pending ? 'Working…' : mode === 'create' ? 'Create account' : 'Sign in'}
+    <div className="frame">
+      <Header showAccount={false} />
+      <main className="wrap">
+        <p className="eyebrow">Save your decks</p>
+        <h1>{mode === 'create' ? 'Create an account' : 'Sign in'}</h1>
+        <p className="lede">
+          {guestCount > 0
+            ? 'An account saves the decks in this browser. Without one, those decks disappear from this browser when its saved data is cleared.'
+            : 'An account keeps your decks and lets you share a link. You can still make a deck first and save it later.'}
+        </p>
+        <form className="stack" onSubmit={onSubmit}>
+          <label>
+            Email
+            <input
+              type="email"
+              autoComplete="email"
+              value={email}
+              required
+              onChange={(event) => setEmail(event.target.value)}
+            />
+          </label>
+          <label>
+            Password
+            <input
+              type="password"
+              autoComplete={mode === 'create' ? 'new-password' : 'current-password'}
+              minLength={6}
+              value={password}
+              required
+              onChange={(event) => setPassword(event.target.value)}
+            />
+          </label>
+          {error ? (
+            <p className="error" role="alert">
+              {error}
+            </p>
+          ) : null}
+          <button type="submit" disabled={pending || !ready}>
+            {pending ? 'Working…' : mode === 'create' ? 'Create account and save' : 'Sign in and save'}
+          </button>
+        </form>
+        <button
+          type="button"
+          className="text"
+          onClick={() => {
+            setMode(mode === 'create' ? 'sign-in' : 'create')
+            setError(null)
+          }}
+        >
+          {mode === 'create'
+            ? 'Already have an account? Sign in'
+            : 'Need an account? Create one'}
         </button>
-      </form>
-      <button
-        type="button"
-        className="text"
-        onClick={() => {
-          setMode(mode === 'create' ? 'sign-in' : 'create')
-          setError(null)
-        }}
-      >
-        {mode === 'create'
-          ? 'Already have an account? Sign in'
-          : 'Need an account? Create one'}
-      </button>
-    </main>
+        <p className="status">
+          <Link className="text" to="/">
+            Back to decks
+          </Link>
+        </p>
+      </main>
+    </div>
   )
 }

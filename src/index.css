@@ -1,6 +1,6 @@
 :root {
-  color: #1e1a16;
-  background: #f3efe6;
+  color: #1b2830;
+  background: #d5ebe3;
   font-family: "Segoe UI", system-ui, sans-serif;
   line-height: 1.45;
   font-synthesis: none;
@@ -16,16 +16,10 @@ body {
   min-height: 100vh;
 }
 
-h1 {
-  margin: 0 0 8px;
-  font-family: Georgia, "Iowan Old Style", serif;
-  font-size: 40px;
-  font-weight: 500;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-}
-
-p {
+h1,
+h2,
+p,
+ul {
   margin: 0;
 }
 
@@ -36,35 +30,43 @@ textarea {
   color: inherit;
 }
 
-button {
-  border: 1px solid #1e1a16;
-  background: #1e1a16;
-  color: #f3efe6;
-  border-radius: 6px;
-  padding: 8px 14px;
+button,
+.account-link {
+  border: 1px solid #0f6b4c;
+  background: #0f6b4c;
+  color: #f4fff9;
+  border-radius: 999px;
+  padding: 10px 18px;
   cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
 }
 
 button.secondary {
-  background: transparent;
-  color: #1e1a16;
+  background: #fffdf8;
+  color: #0f6b4c;
 }
 
 button.danger {
-  background: transparent;
-  color: #8a2e2e;
-  border-color: #c9a3a3;
+  background: #fffdf8;
+  color: #9a3412;
+  border-color: #e7b5a4;
 }
 
 button.text,
 a.text {
   border: 0;
   background: transparent;
-  color: #204e3a;
+  color: #0f6b4c;
+  border-radius: 0;
   padding: 0;
   text-decoration: underline;
   text-underline-offset: 3px;
-  cursor: pointer;
+}
+
+button.danger-text {
+  margin-top: 28px;
+  color: #9a3412;
 }
 
 button:disabled {
@@ -76,7 +78,7 @@ button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 a:focus-visible {
-  outline: 2px solid #204e3a;
+  outline: 2px solid #0f6b4c;
   outline-offset: 2px;
 }
 
@@ -85,10 +87,11 @@ textarea {
   display: block;
   width: 100%;
   margin-top: 6px;
-  border: 1px solid #cfc6b8;
+  border: 1px solid #c9bfa6;
   background: #fffdf8;
-  border-radius: 6px;
+  border-radius: 10px;
   padding: 10px 12px;
+  text-align: center;
 }
 
 textarea {
@@ -98,159 +101,230 @@ textarea {
 
 label {
   display: block;
+  width: 100%;
   font-size: 14px;
+  text-align: center;
 }
 
 a {
   color: inherit;
 }
 
-code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.92em;
+.frame {
+  width: min(680px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0 72px;
+  text-align: center;
 }
 
 .top {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: 16px 20px;
-  border-bottom: 1px solid #e4dccf;
+  gap: 10px;
+  margin-bottom: 28px;
 }
 
 .brand {
   font-family: Georgia, "Iowan Old Style", serif;
-  font-size: 22px;
+  font-size: 28px;
+  letter-spacing: -0.03em;
   text-decoration: none;
+  color: #145c42;
 }
 
 .wrap {
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 28px 20px 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.wrap.narrow {
-  max-width: 460px;
+h1 {
+  font-family: Georgia, "Iowan Old Style", serif;
+  font-size: 42px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
 }
 
 .lede {
-  color: #5e574f;
-  margin-bottom: 24px;
+  max-width: 460px;
+  margin: 10px 0 18px;
+  color: #3e534c;
 }
 
-.eyebrow {
-  margin: 0 0 8px;
-  color: #6d655c;
+.eyebrow,
+.card-kicker {
+  margin: 0;
+  color: #c23b3b;
   font-size: 12px;
-  letter-spacing: 0.08em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .stack {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 14px;
+  width: min(100%, 460px);
+  margin: 8px 0 18px;
 }
 
-.create {
-  display: flex;
-  gap: 12px;
-  align-items: end;
-  margin: 20px 0;
-}
-
-.grow {
-  flex: 1;
-}
-
+.choices,
 .row {
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 12px;
-}
-
-.row.tight {
-  gap: 8px;
-}
-
-.row.spread {
-  justify-content: space-between;
-  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 8px 0 14px;
 }
 
 .status {
-  display: block;
-  color: #5e574f;
+  color: #3e534c;
   font-size: 14px;
 }
 
 .error {
-  color: #8a2e2e;
+  color: #9a3412;
+  margin: 8px 0;
+}
+
+.saved {
+  background: #e7f6ee;
+  border: 1px solid #b7dfc8;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+
+.unsaved {
+  width: min(100%, 460px);
+  margin: 0 0 18px;
+  padding: 14px 16px 16px;
+  border-radius: 16px;
+  background: #fff4d6;
+  border: 1px solid #e2b15a;
+}
+
+.unsaved strong,
+.unsaved p {
+  display: block;
+}
+
+.unsaved p {
+  margin: 6px 0 12px;
+  color: #5c4314;
 }
 
 .deck-list,
 .card-list {
   list-style: none;
-  margin: 8px 0 0;
+  width: 100%;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 
-.deck-row,
-.card-row {
+.deck-tile,
+.index-card,
+.study-card {
+  position: relative;
+  width: min(100%, 460px);
+  border: 1px solid #e4d3ac;
+  border-radius: 18px;
+  background: #fffaf0;
+  box-shadow: 8px 8px 0 #efd7a4;
+  text-align: center;
+}
+
+.deck-tile {
   display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: center;
-  padding: 14px 0;
-  border-bottom: 1px solid #e4dccf;
+  flex-direction: column;
+  gap: 6px;
+  padding: 28px 22px 22px;
   text-decoration: none;
 }
 
-.deck-row strong,
-.card-row strong {
-  display: block;
+.deck-tile::before,
+.index-card::before,
+.study-card::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: 22px;
+  right: 22px;
+  height: 3px;
+  border-radius: 99px;
+  background: #e23d3d;
+}
+
+.deck-tile strong {
+  margin-top: 12px;
+  font-family: Georgia, "Iowan Old Style", serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.index-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 22px 20px;
+}
+
+.card-face {
+  font-family: Georgia, "Iowan Old Style", serif;
+  font-size: 26px;
+  line-height: 1.25;
+}
+
+.back-face {
+  color: #245c49;
 }
 
 .study {
-  margin-top: 20px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .study-card {
-  width: 100%;
-  min-height: 260px;
+  min-height: 320px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
   gap: 16px;
-  text-align: left;
-  border: 1px solid #1e1a16;
-  border-radius: 12px;
-  background: #fffdf8;
-  color: #1e1a16;
-  padding: 24px;
+  padding: 36px 28px;
+  color: #1b2830;
+  cursor: pointer;
+}
+
+.study-card.is-back {
+  background: #f3fff8;
 }
 
 .study-text {
   font-family: Georgia, "Iowan Old Style", serif;
-  font-size: 32px;
+  font-size: 36px;
   line-height: 1.25;
 }
 
 .hint {
-  margin-top: auto;
   color: #6d655c;
   font-size: 13px;
 }
 
-.study .row {
-  margin-top: 14px;
-}
-
 .back {
   display: inline-block;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 @media (max-width: 640px) {
@@ -258,14 +332,14 @@ code {
     font-size: 32px;
   }
 
-  .create,
-  .row.spread,
-  .top {
-    flex-direction: column;
-    align-items: stretch;
+  .study-text,
+  .card-face {
+    font-size: 24px;
   }
 
-  .study-text {
-    font-size: 26px;
+  .deck-tile,
+  .index-card,
+  .study-card {
+    box-shadow: 5px 5px 0 #efd7a4;
   }
 }
