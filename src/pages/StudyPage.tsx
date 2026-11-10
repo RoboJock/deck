@@ -8,7 +8,7 @@ import { getExampleDeck, isExampleDeckId } from '../lib/examples.ts'
 import { getGuestDeck, isGuestDeckId, subscribeGuestDecks } from '../lib/guestDecks.ts'
 import { shuffle } from '../lib/shuffle.ts'
 import { useAuth } from '../useAuth.ts'
-import type { CardRecord, Visibility } from '../types.ts'
+import type { CardRecord, Orientation, Visibility } from '../types.ts'
 
 type Rating = 'got' | 'unsure' | 'again'
 
@@ -18,6 +18,7 @@ export function StudyPage() {
   const guest = isGuestDeckId(deckId)
   const example = isExampleDeckId(deckId)
   const [title, setTitle] = useState('')
+  const [orientation, setOrientation] = useState<Orientation>('vertical')
   const [ownerId, setOwnerId] = useState('')
   const [cards, setCards] = useState<CardRecord[]>([])
   const [ready, setReady] = useState(false)
@@ -48,10 +49,13 @@ export function StudyPage() {
         visibility: 'public' as const,
         front: card.front,
         back: card.back,
+        frontImage: '',
+        backImage: '',
         order: index,
       }))
       const order = shuffle(next.map((card) => card.id))
       setTitle(found.title)
+      setOrientation('vertical')
       setMessage(null)
       setCards(next)
       setQueue(order)
@@ -109,6 +113,7 @@ export function StudyPage() {
       }
       setTitle(found.title)
       setOwnerId('')
+      setOrientation(found.orientation === 'horizontal' ? 'horizontal' : 'vertical')
       setMessage(null)
       takeCards(
         found.cards
@@ -118,6 +123,8 @@ export function StudyPage() {
             visibility: found.visibility,
             front: card.front,
             back: card.back,
+            frontImage: card.frontImage || '',
+            backImage: card.backImage || '',
             order: card.order,
           }))
           .sort((a, b) => a.order - b.order),
@@ -141,6 +148,7 @@ export function StudyPage() {
         const data = snapshot.data()
         setTitle(String(data.title ?? 'Deck'))
         setOwnerId(String(data.ownerId ?? ''))
+        setOrientation(data.orientation === 'horizontal' ? 'horizontal' : 'vertical')
         setMessage(null)
         setReady(true)
       },
@@ -173,6 +181,8 @@ export function StudyPage() {
             visibility: (data.visibility === 'public' ? 'public' : 'private') as Visibility,
             front: String(data.front ?? ''),
             back: String(data.back ?? ''),
+            frontImage: String(data.frontImage ?? ''),
+            backImage: String(data.backImage ?? ''),
             order: Number(data.order ?? 0),
           }
         })
@@ -256,7 +266,7 @@ export function StudyPage() {
           </p>
           <button
             type="button"
-            className={`study-card${flipped ? ' is-back' : ' is-front'}`}
+            className={`study-card is-${orientation}${flipped ? ' is-back' : ' is-front'}`}
             aria-label={`${flipped ? 'Back' : 'Front'} of the card. Click to flip.`}
             onClick={() => {
               setFlipped((current) => !current)
@@ -264,7 +274,12 @@ export function StudyPage() {
             }}
           >
             <span className="card-kicker">{flipped ? 'Back' : 'Front'}</span>
-            <span className="study-text">{flipped ? card.back : card.front}</span>
+            {(flipped ? card.backImage : card.frontImage) ? (
+              <img className="card-photo" alt="" src={flipped ? card.backImage : card.frontImage} />
+            ) : null}
+            <span className={`study-text ${flipped ? 'face-back' : 'face-front'}`}>
+              {flipped ? card.back : card.front}
+            </span>
           </button>
           {revealed ? (
             <div className="rate-row">

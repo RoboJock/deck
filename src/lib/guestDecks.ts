@@ -7,7 +7,7 @@ import {
   updateDoc,
 } from 'firebase/firestore'
 import { db } from './firebase.ts'
-import type { Visibility } from '../types.ts'
+import type { Orientation, Visibility } from '../types.ts'
 
 const STORAGE_KEY = 'deck.guest.v1'
 
@@ -15,6 +15,8 @@ export type GuestCard = {
   id: string
   front: string
   back: string
+  frontImage: string
+  backImage: string
   order: number
 }
 
@@ -22,6 +24,7 @@ export type GuestDeck = {
   id: string
   title: string
   visibility: Visibility
+  orientation: Orientation
   createdAt: number
   cards: GuestCard[]
 }
@@ -34,7 +37,15 @@ function read(): GuestDeck[] {
     if (!raw) return []
     const parsed: unknown = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
-    return parsed as GuestDeck[]
+    return (parsed as GuestDeck[]).map((deck) => ({
+      ...deck,
+      orientation: deck.orientation === 'horizontal' ? 'horizontal' : 'vertical',
+      cards: (deck.cards ?? []).map((card) => ({
+        ...card,
+        frontImage: card.frontImage || '',
+        backImage: card.backImage || '',
+      })),
+    }))
   } catch {
     return []
   }
@@ -76,10 +87,13 @@ export function createGuestDeckWithCards(
     title,
     visibility: 'private',
     createdAt,
+    orientation: 'vertical',
     cards: cards.map((card, index) => ({
       id: `card-${crypto.randomUUID()}`,
       front: card.front,
       back: card.back,
+      frontImage: '',
+      backImage: '',
       order: createdAt + index,
     })),
   }
@@ -89,12 +103,18 @@ export function createGuestDeckWithCards(
 
 export function updateGuestDeck(
   id: string,
-  patch: Partial<Pick<GuestDeck, 'title' | 'visibility'>>,
+  patch: Partial<Pick<GuestDeck, 'title' | 'visibility' | 'orientation'>>,
 ): void {
   write(read().map((deck) => (deck.id === id ? { ...deck, ...patch } : deck)))
 }
 
-export function addGuestCard(deckId: string, front: string, back: string): void {
+export function addGuestCard(
+  deckId: string,
+  front: string,
+  back: string,
+  frontImage = '',
+  backImage = '',
+): void {
   write(
     read().map((deck) => {
       if (deck.id !== deckId) return deck
@@ -102,7 +122,14 @@ export function addGuestCard(deckId: string, front: string, back: string): void 
         ...deck,
         cards: [
           ...deck.cards,
-          { id: `card-${crypto.randomUUID()}`, front, back, order: Date.now() },
+          {
+            id: `card-${crypto.randomUUID()}`,
+            front,
+            back,
+            frontImage,
+            backImage,
+            order: Date.now(),
+          },
         ],
       }
     }),
@@ -114,6 +141,8 @@ export function updateGuestCard(
   cardId: string,
   front: string,
   back: string,
+  frontImage = '',
+  backImage = '',
 ): void {
   write(
     read().map((deck) => {
@@ -121,7 +150,7 @@ export function updateGuestCard(
       return {
         ...deck,
         cards: deck.cards.map((card) =>
-          card.id === cardId ? { ...card, front, back } : card,
+          card.id === cardId ? { ...card, front, back, frontImage, backImage } : card,
         ),
       }
     }),
@@ -155,6 +184,7 @@ export function migrateGuestDecks(uid: string): Promise<number> {
         ownerId: uid,
         title: deck.title,
         visibility: deck.visibility,
+        orientation: deck.orientation === 'horizontal' ? 'horizontal' : 'vertical',
         cardCount: 0,
         createdAt: serverTimestamp(),
       })
@@ -169,6 +199,8 @@ export function migrateGuestDecks(uid: string): Promise<number> {
             visibility: deck.visibility,
             front: card.front,
             back: card.back,
+            frontImage: card.frontImage || '',
+            backImage: card.backImage || '',
             order: card.order,
           })
         }

@@ -10,8 +10,21 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == ownerId;
     }
 
-    function deckData(deckId) {
+        function deckData(deckId) {
       return get(/databases/$(database)/documents/decks/$(deckId)).data;
+    }
+
+    function faceOk(data, textKey, imageKey) {
+      return data[textKey] is string
+        && data[textKey].size() <= 600
+        && (
+          !(imageKey in data)
+          || (data[imageKey] is string && data[imageKey].size() <= 180000)
+        )
+        && (
+          data[textKey].size() > 0
+          || (imageKey in data && data[imageKey] is string && data[imageKey].size() > 0)
+        );
     }
 
     match /decks/{deckId} {
@@ -20,18 +33,22 @@ service cloud.firestore {
 
       allow create: if owns(request.resource.data.ownerId)
         && request.resource.data.keys().hasOnly([
-          'ownerId', 'title', 'visibility', 'cardCount', 'createdAt'
+          'ownerId', 'title', 'visibility', 'orientation', 'cardCount', 'createdAt'
         ])
         && request.resource.data.title is string
         && request.resource.data.title.size() > 0
         && request.resource.data.title.size() <= 100
         && request.resource.data.visibility in ['public', 'private']
+        && (
+          !('orientation' in request.resource.data)
+          || request.resource.data.orientation in ['vertical', 'horizontal']
+        )
         && request.resource.data.cardCount == 0
         && request.resource.data.createdAt is timestamp;
 
       allow update: if owns(resource.data.ownerId)
         && request.resource.data.keys().hasOnly([
-          'ownerId', 'title', 'visibility', 'cardCount', 'createdAt'
+          'ownerId', 'title', 'visibility', 'orientation', 'cardCount', 'createdAt'
         ])
         && request.resource.data.ownerId == resource.data.ownerId
         && request.resource.data.createdAt == resource.data.createdAt
@@ -39,6 +56,10 @@ service cloud.firestore {
         && request.resource.data.title.size() > 0
         && request.resource.data.title.size() <= 100
         && request.resource.data.visibility in ['public', 'private']
+        && (
+          !('orientation' in request.resource.data)
+          || request.resource.data.orientation in ['vertical', 'horizontal']
+        )
         && request.resource.data.cardCount is int
         && request.resource.data.cardCount >= 0;
 
@@ -51,21 +72,17 @@ service cloud.firestore {
         allow create: if owns(request.resource.data.ownerId)
           && deckData(deckId).ownerId == request.auth.uid
           && request.resource.data.keys().hasOnly([
-            'ownerId', 'visibility', 'front', 'back', 'order'
+            'ownerId', 'visibility', 'front', 'back', 'frontImage', 'backImage', 'order'
           ])
           && request.resource.data.visibility == deckData(deckId).visibility
-          && request.resource.data.front is string
-          && request.resource.data.back is string
-          && request.resource.data.front.size() > 0
-          && request.resource.data.front.size() <= 600
-          && request.resource.data.back.size() > 0
-          && request.resource.data.back.size() <= 600
+          && faceOk(request.resource.data, 'front', 'frontImage')
+          && faceOk(request.resource.data, 'back', 'backImage')
           && request.resource.data.order is number;
 
         allow update: if owns(resource.data.ownerId)
           && deckData(deckId).ownerId == request.auth.uid
           && request.resource.data.keys().hasOnly([
-            'ownerId', 'visibility', 'front', 'back', 'order'
+            'ownerId', 'visibility', 'front', 'back', 'frontImage', 'backImage', 'order'
           ])
           && request.resource.data.ownerId == resource.data.ownerId
           && request.resource.data.order == resource.data.order
@@ -73,12 +90,8 @@ service cloud.firestore {
             request.resource.data.visibility == deckData(deckId).visibility
             || request.resource.data.visibility == 'private'
           )
-          && request.resource.data.front is string
-          && request.resource.data.back is string
-          && request.resource.data.front.size() > 0
-          && request.resource.data.front.size() <= 600
-          && request.resource.data.back.size() > 0
-          && request.resource.data.back.size() <= 600;
+          && faceOk(request.resource.data, 'front', 'frontImage')
+          && faceOk(request.resource.data, 'back', 'backImage');
 
         allow delete: if owns(resource.data.ownerId)
           && deckData(deckId).ownerId == request.auth.uid;

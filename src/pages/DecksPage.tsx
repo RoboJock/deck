@@ -20,7 +20,7 @@ import {
 import { useAuth } from '../useAuth.ts'
 import { UnsavedNotice } from '../components/UnsavedNotice.tsx'
 import { copyExampleDeck, examples } from '../lib/examples.ts'
-import type { DeckRecord, Visibility } from '../types.ts'
+import type { DeckRecord, Orientation, Visibility } from '../types.ts'
 
 export function DecksPage() {
   const { user } = useAuth()
@@ -63,6 +63,7 @@ export function DecksPage() {
             ownerId: String(data.ownerId ?? ''),
             title: String(data.title ?? ''),
             visibility: (data.visibility === 'public' ? 'public' : 'private') as Visibility,
+            orientation: (data.orientation === 'horizontal' ? 'horizontal' : 'vertical') as Orientation,
             cardCount: Number(data.cardCount ?? 0),
             createdAt: data.createdAt ?? null,
           }

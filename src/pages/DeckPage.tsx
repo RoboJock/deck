@@ -26,8 +26,9 @@ import {
   updateGuestDeck,
 } from '../lib/guestDecks.ts'
 import { useAuth } from '../useAuth.ts'
+import { CardComposer } from '../components/CardComposer.tsx'
 import { UnsavedNotice } from '../components/UnsavedNotice.tsx'
-import type { CardRecord, DeckRecord, Visibility } from '../types.ts'
+import type { CardRecord, DeckRecord, Orientation, Visibility } from '../types.ts'
 
 export function DeckPage() {
   const { deckId = '' } = useParams()
@@ -40,9 +41,14 @@ export function DeckPage() {
   const [title, setTitle] = useState('')
   const [front, setFront] = useState('')
   const [back, setBack] = useState('')
+  const [frontImage, setFrontImage] = useState('')
+  const [backImage, setBackImage] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editFront, setEditFront] = useState('')
   const [editBack, setEditBack] = useState('')
+  const [editFrontImage, setEditFrontImage] = useState('')
+  const [editBackImage, setEditBackImage] = useState('')
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
@@ -70,6 +76,7 @@ export function DeckPage() {
         ownerId: '',
         title: found.title,
         visibility: found.visibility,
+        orientation: found.orientation === 'horizontal' ? 'horizontal' : 'vertical',
         cardCount: found.cards.length,
         createdAt: null,
       })
@@ -82,6 +89,8 @@ export function DeckPage() {
             visibility: found.visibility,
             front: card.front,
             back: card.back,
+            frontImage: card.frontImage || '',
+            backImage: card.backImage || '',
             order: card.order,
           }))
           .sort((a, b) => a.order - b.order),
@@ -109,6 +118,7 @@ export function DeckPage() {
           ownerId: String(data.ownerId ?? ''),
           title: nextTitle,
           visibility: data.visibility === 'public' ? 'public' : 'private',
+          orientation: data.orientation === 'horizontal' ? 'horizontal' : 'vertical',
           cardCount: Number(data.cardCount ?? 0),
           createdAt: data.createdAt ?? null,
         })
@@ -137,6 +147,8 @@ export function DeckPage() {
             visibility: (data.visibility === 'public' ? 'public' : 'private') as Visibility,
             front: String(data.front ?? ''),
             back: String(data.back ?? ''),
+            frontImage: String(data.frontImage ?? ''),
+            backImage: String(data.backImage ?? ''),
             order: Number(data.order ?? 0),
           }
         })
@@ -188,25 +200,47 @@ export function DeckPage() {
     }
   }
 
+  async function changeOrientation(next: Orientation) {
+    if (!deck || next === deck.orientation) return
+    setPending(true)
+    setError(null)
+    try {
+      if (guest) updateGuestDeck(deck.id, { orientation: next })
+      else await updateDoc(doc(db, 'decks', deck.id), { orientation: next })
+    } catch (caught) {
+      setError(explain(caught))
+    } finally {
+      setPending(false)
+    }
+  }
+
+  function cardPayload(textFront: string, textBack: string, imageFront: string, imageBack: string) {
+    return {
+      front: textFront,
+      back: textBack,
+      frontImage: imageFront,
+      backImage: imageBack,
+    }
+  }
+
   async function addCard(event: FormEvent) {
     event.preventDefault()
     if (!deck) return
     const trimmedFront = front.trim()
     const trimmedBack = back.trim()
-    if (!trimmedFront || !trimmedBack) return
+    if ((!trimmedFront && !frontImage) || (!trimmedBack && !backImage)) return
     setPending(true)
     setError(null)
     try {
       if (guest) {
-        addGuestCard(deck.id, trimmedFront, trimmedBack)
+        addGuestCard(deck.id, trimmedFront, trimmedBack, frontImage, backImage)
       } else if (user) {
         const cardRef = doc(collection(db, 'decks', deck.id, 'cards'))
         const batch = writeBatch(db)
         batch.set(cardRef, {
           ownerId: user.uid,
           visibility: deck.visibility,
-          front: trimmedFront,
-          back: trimmedBack,
+          ...cardPayload(trimmedFront, trimmedBack, frontImage, backImage),
           order: Date.now(),
         })
         batch.update(doc(db, 'decks', deck.id), { cardCount: increment(1) })
@@ -214,6 +248,8 @@ export function DeckPage() {
       }
       setFront('')
       setBack('')
+      setFrontImage('')
+      setBackImage('')
     } catch (caught) {
       setError(explain(caught))
     } finally {
@@ -226,12 +262,14 @@ export function DeckPage() {
     const card = cards.find((item) => item.id === editingId)
     const trimmedFront = editFront.trim()
     const trimmedBack = editBack.trim()
-    if (!deck || !card || !trimmedFront || !trimmedBack) return
+    if (!deck || !card) return
+    if ((!trimmedFront && !editFrontImage) || (!trimmedBack && !editBackImage)) return
     setPending(true)
     setError(null)
     try {
-      if (guest) updateGuestCard(deck.id, card.id, trimmedFront, trimmedBack)
-      else if (card.ref) await updateDoc(card.ref, { front: trimmedFront, back: trimmedBack })
+      const payload = cardPayload(trimmedFront, trimmedBack, editFrontImage, editBackImage)
+      if (guest) updateGuestCard(deck.id, card.id, payload.front, payload.back, payload.frontImage, payload.backImage)
+      else if (card.ref) await updateDoc(card.ref, payload)
       setEditingId(null)
     } catch (caught) {
       setError(explain(caught))
@@ -263,7 +301,6 @@ export function DeckPage() {
 
   async function removeDeck() {
     if (!deck) return
-    if (!window.confirm(`Delete “${deck.title}” and all of its cards?`)) return
     setPending(true)
     setError(null)
     try {
@@ -309,12 +346,13 @@ export function DeckPage() {
           <>
             <div className="editor-top">
             <div>
-            <form className="stack" onSubmit={saveTitle}>
+            <form className="stack title-form" onSubmit={saveTitle}>
               <label>
                 Title
                 <input
                   value={title}
                   maxLength={100}
+                  style={{ width: `${Math.min(36, Math.max(title.trim().length + 1, 12))}ch` }}
                   onChange={(event) => setTitle(event.target.value)}
                 />
               </label>
@@ -326,7 +364,7 @@ export function DeckPage() {
                 Save title
               </button>
             </form>
-            <div className="choices">
+            <div className="pair">
               <button
                 type="button"
                 className={deck.visibility === 'private' ? '' : 'secondary'}
@@ -344,6 +382,24 @@ export function DeckPage() {
                 For anyone
               </button>
             </div>
+            <div className="pair">
+              <button
+                type="button"
+                className={deck.orientation === 'vertical' ? '' : 'secondary'}
+                disabled={pending}
+                onClick={() => changeOrientation('vertical')}
+              >
+                Vertical
+              </button>
+              <button
+                type="button"
+                className={deck.orientation === 'horizontal' ? '' : 'secondary'}
+                disabled={pending}
+                onClick={() => changeOrientation('horizontal')}
+              >
+                Horizontal
+              </button>
+            </div>
             {deck.visibility === 'public' ? (
               <p className="status">
                 {guest
@@ -359,90 +415,58 @@ export function DeckPage() {
               <p className="status">Only you can open this deck.</p>
             )}
             {notice ? <p className="status">{notice}</p> : null}
-            <Link className="account-link" to={`/study/${deck.id}`}>
+            <Link className="account-link study-launch" to={`/study/${deck.id}`}>
               Study this deck
             </Link>
             </div>
-            <form className="stack" onSubmit={addCard}>
-                  <label>
-                    Front
-                    <textarea
-                      value={front}
-                      maxLength={600}
-                      required
-                      onChange={(event) => setFront(event.target.value)}
-                    />
-                  </label>
-                  <label>
-                    Back
-                    <textarea
-                      value={back}
-                      maxLength={600}
-                      required
-                      onChange={(event) => setBack(event.target.value)}
-                    />
-                  </label>
-                  <button
-                    type="submit"
-                    disabled={pending || front.trim().length === 0 || back.trim().length === 0}
-                  >
-                    Add card
-                  </button>
-                </form>
+            <CardComposer
+              front={{ text: front, image: frontImage }}
+              back={{ text: back, image: backImage }}
+              pending={pending}
+              submitLabel="Add card"
+              onFront={(face) => {
+                setFront(face.text)
+                setFrontImage(face.image)
+              }}
+              onBack={(face) => {
+                setBack(face.text)
+                setBackImage(face.image)
+              }}
+              onSubmit={addCard}
+            />
             </div>
                 {cards.length === 0 ? (
                   <p className="status">No cards yet.</p>
                 ) : (
-                  <ul className="card-list">
+                  <ul className={`card-list is-${deck.orientation}`}>
                     {cards.map((card) => (
                       <li key={card.id}>
                         {editingId === card.id ? (
-                          <form className="index-card" onSubmit={saveCard}>
-                            <label>
-                              Front
-                              <textarea
-                                value={editFront}
-                                maxLength={600}
-                                required
-                                onChange={(event) => setEditFront(event.target.value)}
-                              />
-                            </label>
-                            <label>
-                              Back
-                              <textarea
-                                value={editBack}
-                                maxLength={600}
-                                required
-                                onChange={(event) => setEditBack(event.target.value)}
-                              />
-                            </label>
-                            <div className="choices">
-                              <button
-                                type="submit"
-                                disabled={
-                                  pending ||
-                                  editFront.trim().length === 0 ||
-                                  editBack.trim().length === 0
-                                }
-                              >
-                                Save card
-                              </button>
-                              <button
-                                type="button"
-                                className="secondary"
-                                onClick={() => setEditingId(null)}
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </form>
+                          <CardComposer
+                            front={{ text: editFront, image: editFrontImage }}
+                            back={{ text: editBack, image: editBackImage }}
+                            pending={pending}
+                            submitLabel="Save card"
+                            onFront={(face) => {
+                              setEditFront(face.text)
+                              setEditFrontImage(face.image)
+                            }}
+                            onBack={(face) => {
+                              setEditBack(face.text)
+                              setEditBackImage(face.image)
+                            }}
+                            onSubmit={saveCard}
+                            onCancel={() => setEditingId(null)}
+                          />
                         ) : (
-                          <article className="index-card">
+                          <article className={`index-card is-${deck.orientation}`}>
                             <p className="card-kicker">Front</p>
-                            <p className="card-face">{card.front}</p>
-                            <p className="card-kicker">Back</p>
-                            <p className="card-face back-face">{card.back}</p>
-                            <div className="choices">
+                            {card.frontImage ? <img className="card-photo" alt="" src={card.frontImage} /> : null}
+                            {card.front ? <p className="card-face face-front">{card.front}</p> : null}
+                            <p className="card-kicker back-kicker">Back</p>
+                            {card.backImage ? <img className="card-photo" alt="" src={card.backImage} /> : null}
+                            {card.back ? <p className="card-face face-back">{card.back}</p> : null}
+                            <div className="pair">
                               <button
                                 type="button"
                                 className="secondary"
@@ -451,6 +475,8 @@ export function DeckPage() {
                                   setEditingId(card.id)
                                   setEditFront(card.front)
                                   setEditBack(card.back)
+                                  setEditFrontImage(card.frontImage)
+                                  setEditBackImage(card.backImage)
                                 }}
                               >
                                 Edit
@@ -470,9 +496,23 @@ export function DeckPage() {
                     ))}
                   </ul>
                 )}
-            <button type="button" className="text danger-text" disabled={pending} onClick={removeDeck}>
-              Delete deck
-            </button>
+            {confirmingDelete ? (
+              <div className="confirm" role="alertdialog" aria-label={`Delete ${deck.title}`}>
+                <p>Delete “{deck.title}” and all of its cards?</p>
+                <div className="pair">
+                  <button type="button" className="danger" disabled={pending} onClick={removeDeck}>
+                    Delete {deck.title}
+                  </button>
+                  <button type="button" className="secondary" onClick={() => setConfirmingDelete(false)}>
+                    Keep {deck.title}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button type="button" className="danger" disabled={pending} onClick={() => setConfirmingDelete(true)}>
+                Delete deck
+              </button>
+            )}
           </>
         ) : null}
         {error ? (
