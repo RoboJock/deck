@@ -336,9 +336,26 @@ a {
 }
 
 .rate-row button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   width: 100%;
   padding-left: 8px;
   padding-right: 8px;
+}
+
+.rate-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.3em;
+  padding: 0 4px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
 }
 
 .rate-got {
@@ -745,7 +762,7 @@ h1 {
   align-items: center;
   justify-content: center;
   gap: 16px;
-  padding: 42px 32px;
+  padding: 42px 32px 52px;
   color: #1b2830;
   cursor: pointer;
 }
@@ -782,6 +799,18 @@ h1 {
 .study-card .card-kicker {
   padding: 4px 12px;
   border-radius: 999px;
+}
+
+.flip-hint {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.2;
+  color: #7a6a52;
+  pointer-events: none;
 }
 
 .flip-scene {

@@ -33,6 +33,7 @@ function StudyFace({
         <span className="card-kicker">{side === 'front' ? 'Front' : 'Back'}</span>
         {image ? <img className="card-photo" alt="" src={image} /> : null}
         <span className={`study-text${side === 'front' ? ' face-front' : ''}`}>{text}</span>
+        <span className="flip-hint">Space flips</span>
       </span>
     </span>
   )
@@ -630,13 +631,13 @@ export function StudyPage({ daily = false }: { daily?: boolean }) {
           {revealed ? (
             <div className="rate-row">
               <button type="button" className="rate-got" onClick={() => rate('got')}>
-                Got it
+                Got it <span className="rate-key">1</span>
               </button>
               <button type="button" className="rate-unsure" onClick={() => rate('unsure')}>
-                Skip
+                Skip <span className="rate-key">2</span>
               </button>
               <button type="button" className="rate-again" onClick={() => rate('again')}>
-                Don't know
+                Don't know <span className="rate-key">3</span>
               </button>
             </div>
           ) : null}
@@ -677,7 +678,6 @@ export function StudyPage({ daily = false }: { daily?: boolean }) {
             </div>
           </div>
           {saveError ? <p className="error">{saveError}</p> : null}
-          <p className="status">Space flips the card. After it is open, 1 is Got it, 2 is Skip, and 3 is Don't know.</p>
           {visibility === 'public' ? (
             <button type="button" className="secondary" onClick={copyShareLink}>
               {copied ? 'Link copied' : 'Copy link'}
