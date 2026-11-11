@@ -34,7 +34,7 @@ function StudyFace({
         <span className="card-kicker">{side === 'front' ? 'Front' : 'Back'}</span>
         {image ? <img className="card-photo" alt="" src={image} /> : null}
         <span className={`study-text${side === 'front' ? ' face-front' : ''}`}>{text}</span>
-        <span className="flip-hint">Space flips</span>
+        <span className="flip-hint">Click or press space to flip</span>
       </span>
     </span>
   )
