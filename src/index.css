@@ -222,12 +222,25 @@ a {
   color: #0f6b4c;
 }
 
+.study-options {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 48px;
+  margin-top: 8px;
+}
+
 .study-direction {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
   margin-top: 8px;
+}
+
+.study-options .study-direction {
+  margin-top: 0;
 }
 
 .answer-box {
@@ -905,6 +918,12 @@ button.flip-card {
   .split,
   .composer {
     grid-template-columns: 1fr;
+  }
+
+  .study-options {
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
   }
 
   .top {

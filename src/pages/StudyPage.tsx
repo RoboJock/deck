@@ -678,34 +678,36 @@ export function StudyPage({ daily = false }: { daily?: boolean }) {
               Undo
             </button>
           ) : null}
-          <div className="study-direction">
-            <p className="option-label">Type the answer:</p>
-            <div className="pair equal-pair">
-              <button type="button" className={typeCheck ? '' : 'secondary'} onClick={() => chooseTyping(true)}>
-                On
-              </button>
-              <button type="button" className={typeCheck ? 'secondary' : ''} onClick={() => chooseTyping(false)}>
-                Off
-              </button>
+          <div className="study-options">
+            <div className="study-direction">
+              <p className="option-label">Type the answer:</p>
+              <div className="pair equal-pair">
+                <button type="button" className={typeCheck ? '' : 'secondary'} onClick={() => chooseTyping(true)}>
+                  On
+                </button>
+                <button type="button" className={typeCheck ? 'secondary' : ''} onClick={() => chooseTyping(false)}>
+                  Off
+                </button>
+              </div>
             </div>
-          </div>
-          <div className="study-direction">
-            <p className="option-label">Study direction:</p>
-            <div className="pair equal-pair">
-              <button
-                type="button"
-                className={backFirst ? 'secondary' : ''}
-                onClick={() => chooseDirection(false)}
-              >
-                Front first
-              </button>
-              <button
-                type="button"
-                className={backFirst ? '' : 'secondary'}
-                onClick={() => chooseDirection(true)}
-              >
-                Back first
-              </button>
+            <div className="study-direction">
+              <p className="option-label">Study direction:</p>
+              <div className="pair equal-pair">
+                <button
+                  type="button"
+                  className={backFirst ? 'secondary' : ''}
+                  onClick={() => chooseDirection(false)}
+                >
+                  Front first
+                </button>
+                <button
+                  type="button"
+                  className={backFirst ? '' : 'secondary'}
+                  onClick={() => chooseDirection(true)}
+                >
+                  Back first
+                </button>
+              </div>
             </div>
           </div>
           {saveError ? <p className="error">{saveError}</p> : null}
