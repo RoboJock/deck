@@ -252,13 +252,7 @@ a {
 
 .quiet-toggle {
   align-self: center;
-}
-
-.app-shell.is-quiet .quiet-toggle {
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  z-index: 40;
+  white-space: nowrap;
 }
 
 .app-shell.is-quiet .top,

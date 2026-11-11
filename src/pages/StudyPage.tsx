@@ -68,6 +68,8 @@ export function StudyPage({ daily = false }: { daily?: boolean }) {
   const [copied, setCopied] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [quiet, setQuiet] = useState(isStudyQuiet())
+  const [quietSpot, setQuietSpot] = useState<{ top: number; left: number } | null>(null)
+  const quietButton = useRef<HTMLButtonElement>(null)
   const [undo, setUndo] = useState<{
     cardId: string
     index: number
@@ -653,11 +655,26 @@ export function StudyPage({ daily = false }: { daily?: boolean }) {
         </>
       ) : null}
       <button
+        ref={quietButton}
         type="button"
         className="secondary quiet-toggle"
-        onClick={() => setStudyQuiet(!quiet)}
+        style={
+          quiet && quietSpot
+            ? { position: 'fixed', top: quietSpot.top, left: quietSpot.left, transform: 'translateX(-50%)', zIndex: 40 }
+            : undefined
+        }
+        onClick={() => {
+          if (!quiet && quietButton.current) {
+            const box = quietButton.current.getBoundingClientRect()
+            setQuietSpot({ top: box.top, left: box.left + box.width / 2 })
+            setStudyQuiet(true)
+            return
+          }
+          setQuietSpot(null)
+          setStudyQuiet(false)
+        }}
       >
-        {quiet ? 'Show the rest' : 'Hide the rest'}
+        {quiet ? 'Exit study mode' : 'Study mode'}
       </button>
     </main>
   )
