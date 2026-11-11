@@ -537,6 +537,7 @@ export function StudyPage({ daily = false }: { daily?: boolean }) {
               </button>
             </p>
           ) : null}
+          <div className={`study-stage is-${orientation}`}>
           <div className={`flip-scene is-${orientation}`}>
           <button
             type="button"
@@ -606,6 +607,7 @@ export function StudyPage({ daily = false }: { daily?: boolean }) {
               </button>
             </div>
           ) : null}
+          </div>
           {undo ? (
             <button type="button" className="secondary" onClick={undoMark}>
               Undo

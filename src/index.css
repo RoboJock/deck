@@ -310,11 +310,34 @@ a {
   margin: 0;
 }
 
-.rate-row {
+.study-stage {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 18px;
+  width: min(440px, 100%);
+}
+
+.study-stage.is-horizontal {
+  width: min(860px, 100%);
+}
+
+.study-stage .flip-scene,
+.study-stage .flip-scene.is-horizontal {
+  width: 100%;
+}
+
+.rate-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
+  width: 100%;
+}
+
+.rate-row button {
+  width: 100%;
+  padding-left: 8px;
+  padding-right: 8px;
 }
 
 .rate-got {
@@ -1181,6 +1204,11 @@ button.danger-fill {
 .study-screen .study-card.is-vertical {
   width: min(440px, 100%);
   min-height: min(640px, 72vh);
+}
+
+.study-stage .study-card.is-horizontal,
+.study-stage .study-card.is-vertical {
+  width: 100%;
 }
 
 .card-list.is-horizontal {
