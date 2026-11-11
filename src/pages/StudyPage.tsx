@@ -675,57 +675,51 @@ export function StudyPage({ daily = false }: { daily?: boolean }) {
             </div>
           ) : null}
           </div>
-          {undo ? (
-            <button type="button" className="secondary" onClick={undoMark}>
-              Undo
-            </button>
-          ) : null}
-          <div className="study-options">
-            <div className="study-direction">
-              <p className="option-label">Type the answer:</p>
-              <div className="pair equal-pair">
-                <button type="button" className={typeCheck ? '' : 'secondary'} onClick={() => chooseTyping(true)}>
-                  On
-                </button>
-                <button type="button" className={typeCheck ? 'secondary' : ''} onClick={() => chooseTyping(false)}>
-                  Off
-                </button>
-              </div>
+          <div className="study-controls">
+            <span className="option-label">Type the answer</span>
+            <div className="pair equal-pair">
+              <button type="button" className={typeCheck ? '' : 'secondary'} onClick={() => chooseTyping(true)}>
+                On
+              </button>
+              <button type="button" className={typeCheck ? 'secondary' : ''} onClick={() => chooseTyping(false)}>
+                Off
+              </button>
             </div>
-            <div className="study-direction">
-              <p className="option-label">Study direction:</p>
-              <div className="pair equal-pair">
-                <button
-                  type="button"
-                  className={backFirst ? 'secondary' : ''}
-                  onClick={() => chooseDirection(false)}
-                >
-                  Front first
-                </button>
-                <button
-                  type="button"
-                  className={backFirst ? '' : 'secondary'}
-                  onClick={() => chooseDirection(true)}
-                >
-                  Back first
-                </button>
-              </div>
+            <span className="option-label">Study direction</span>
+            <div className="pair equal-pair">
+              <button
+                type="button"
+                className={backFirst ? 'secondary' : ''}
+                onClick={() => chooseDirection(false)}
+              >
+                Front first
+              </button>
+              <button
+                type="button"
+                className={backFirst ? '' : 'secondary'}
+                onClick={() => chooseDirection(true)}
+              >
+                Back first
+              </button>
             </div>
+            {undo ? (
+              <button type="button" className="secondary" onClick={undoMark}>
+                Undo
+              </button>
+            ) : null}
+            {visibility === 'public' ? (
+              <button type="button" className="secondary" onClick={copyShareLink}>
+                {copied ? 'Link copied' : 'Copy link'}
+              </button>
+            ) : null}
+            {canCopyDeck ? (
+              <button type="button" className="secondary" disabled={copying} onClick={() => void copyPublicDeck()}>
+                {copying ? 'Copying…' : 'Copy this deck'}
+              </button>
+            ) : null}
           </div>
           {saveError ? <p className="error">{saveError}</p> : null}
         </>
-      ) : null}
-      {visibility === 'public' ? (
-        <div className="study-copy-row">
-          <button type="button" className="secondary" onClick={copyShareLink}>
-            {copied ? 'Link copied' : 'Copy link'}
-          </button>
-          {canCopyDeck ? (
-            <button type="button" className="secondary" disabled={copying} onClick={() => void copyPublicDeck()}>
-              {copying ? 'Copying…' : 'Copy this deck'}
-            </button>
-          ) : null}
-        </div>
       ) : null}
       {canCopyDeck ? (
         <p className="status study-copy-note">
