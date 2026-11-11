@@ -4,7 +4,8 @@ export function UnsavedNotice() {
   return (
     <aside className="unsaved">
       <p>
-        <strong>This deck will disappear.</strong> Create an account to save your deck.
+        <strong>This deck stays in this browser.</strong> Create an account to save it. Without an
+        account, you cannot list a deck publicly.
       </p>
       <div className="pair">
         <Link className="account-link" to="/account">

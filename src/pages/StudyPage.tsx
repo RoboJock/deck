@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type TransitionEvent } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { FirebaseError } from 'firebase/app'
 import { collection, doc, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../lib/firebase.ts'
@@ -9,6 +9,7 @@ import { loadDailyPile } from '../lib/daily.ts'
 import { getExampleDeck, isExampleDeckId } from '../lib/examples.ts'
 import { getGuestDeck, isGuestDeckId, subscribeGuestDecks } from '../lib/guestDecks.ts'
 import { isStudyQuiet, setStudyQuiet, subscribeStudyQuiet } from '../lib/quiet.ts'
+import { duplicateDeck } from '../lib/deckCopy.ts'
 import { marksForCards, removeProgress, saveProgress, type ProgressMark, type Rating } from '../lib/progress.ts'
 import { shuffle } from '../lib/shuffle.ts'
 import { useAuth } from '../useAuth.ts'
@@ -41,6 +42,7 @@ function StudyFace({
 
 export function StudyPage({ daily = false }: { daily?: boolean }) {
   const params = useParams()
+  const navigate = useNavigate()
   const deckId = daily ? 'daily' : (params.deckId ?? '')
   const { user } = useAuth()
   const guest = !daily && isGuestDeckId(deckId)
@@ -67,6 +69,8 @@ export function StudyPage({ daily = false }: { daily?: boolean }) {
   const [typed, setTyped] = useState('')
   const [verdict, setVerdict] = useState<'match' | 'miss' | null>(null)
   const [copied, setCopied] = useState(false)
+  const [copying, setCopying] = useState(false)
+  const [cardsReady, setCardsReady] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [quiet, setQuiet] = useState(isStudyQuiet())
   const [fullscreen, setFullscreen] = useState(false)
@@ -97,6 +101,8 @@ export function StudyPage({ daily = false }: { daily?: boolean }) {
     setTyped('')
     setVerdict(null)
     setUndo(null)
+    setCopying(false)
+    setCardsReady(false)
     memoryApplied.current = ''
     const found = example ? getExampleDeck(deckId) : null
     if (found) {
@@ -289,6 +295,7 @@ export function StudyPage({ daily = false }: { daily?: boolean }) {
         })
         next.sort((a, b) => a.order - b.order)
         takeCards(next)
+        setCardsReady(true)
       },
       (caught) => setMessage(explain(caught)),
     )
@@ -463,6 +470,30 @@ export function StudyPage({ daily = false }: { daily?: boolean }) {
       area.remove()
     }
     setCopied(true)
+  }
+
+  async function copyPublicDeck() {
+    setCopying(true)
+    setSaveError(null)
+    try {
+      const id = await duplicateDeck(
+        {
+          title,
+          orientation,
+          cards: cards.map((item) => ({
+            front: item.front,
+            back: item.back,
+            frontImage: item.frontImage,
+            backImage: item.backImage,
+          })),
+        },
+        user?.uid ?? null,
+      )
+      navigate(`/decks/${id}`)
+    } catch (caught) {
+      setSaveError(explain(caught))
+      setCopying(false)
+    }
   }
 
   useEffect(() => {
@@ -684,6 +715,18 @@ export function StudyPage({ daily = false }: { daily?: boolean }) {
             </button>
           ) : null}
         </>
+      ) : null}
+      {visibility === 'public' && !example && !guest && ownerId && (!user || user.uid !== ownerId) && cardsReady ? (
+        <div className="study-direction">
+          <button type="button" className="secondary" disabled={copying} onClick={() => void copyPublicDeck()}>
+            {copying ? 'Copying…' : 'Copy this deck'}
+          </button>
+          <p className="status">
+            {user
+              ? 'The copy is yours to edit.'
+              : 'The copy is yours to edit. Without an account, it stays in this browser and cannot be listed publicly.'}
+          </p>
+        </div>
       ) : null}
     </main>
   )

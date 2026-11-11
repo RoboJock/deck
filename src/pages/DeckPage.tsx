@@ -491,6 +491,11 @@ export function DeckPage() {
                   Anyone
                 </button>
               </div>
+              {guest ? (
+                <p className="status">
+                  Without an account, this deck cannot be listed publicly.
+                </p>
+              ) : null}
             </div>
             <div className="option-group">
               <p className="option-label">Card view:</p>

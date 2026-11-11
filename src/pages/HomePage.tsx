@@ -115,6 +115,11 @@ export function HomePage() {
                 {pending ? 'Creating…' : 'Create deck'}
               </button>
             </form>
+            {!user ? (
+              <p className="status">
+                Without an account, a deck stays in this browser and cannot be listed publicly.
+              </p>
+            ) : null}
           </div>
           <article className="index-card home-sample" aria-hidden="true">
             <p className="card-kicker">Front</p>
