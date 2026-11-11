@@ -951,15 +951,24 @@ button.flip-card {
 .nav-toggle {
   position: fixed;
   z-index: 35;
-  top: calc(var(--header-h, 68px) + 12px);
-  left: calc(var(--side-w, 248px) + 8px);
+  top: calc(var(--header-h, 68px) + 14px);
+  left: calc(var(--side-w, 248px) + 10px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 18px;
+  height: 18px;
+  margin: 0;
   padding: 0;
-  border-radius: 8px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #3e534c;
+  box-shadow: none;
+}
+
+.nav-toggle:hover {
+  color: #0f6b4c;
 }
 
 .app-shell {
@@ -1206,6 +1215,16 @@ html[data-theme="dark"] .side-link,
 html[data-theme="dark"] .top-link,
 html[data-theme="dark"] h1,
 html[data-theme="dark"] h2,
+html[data-theme="dark"] .nav-toggle {
+  background: transparent;
+  border: 0;
+  color: #c8c8c8;
+}
+
+html[data-theme="dark"] .nav-toggle:hover {
+  color: #8fd9b4;
+}
+
 html[data-theme="dark"] button.side-heading {
   color: #f2f2f2;
 }

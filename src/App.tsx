@@ -47,7 +47,7 @@ function Shell() {
         <Sidebar />
         <button
           type="button"
-          className="secondary nav-toggle"
+          className="nav-toggle"
           aria-expanded={menuOpen}
           aria-label={menuOpen ? 'Collapse sidebar' : 'Expand sidebar'}
           onClick={() => setMenuOpen((open) => !open)}
