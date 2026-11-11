@@ -44,7 +44,20 @@ function Shell() {
     <div className={`${menuOpen ? 'app-shell nav-open' : 'app-shell'}${quiet ? ' is-quiet' : ''}`}>
       <Header />
       <div className="app-body">
-        <Sidebar open={menuOpen} onToggle={() => setMenuOpen((open) => !open)} />
+        <Sidebar />
+        <button
+          type="button"
+          className="secondary nav-toggle"
+          aria-expanded={menuOpen}
+          aria-label={menuOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <rect x="3.5" y="4.5" width="17" height="15" rx="2" fill="none" stroke="currentColor" strokeWidth="1.6" />
+            <path d="M9.5 4.5v15" stroke="currentColor" strokeWidth="1.6" />
+            <rect x="5.1" y="6.3" width="3.1" height="11.4" rx="0.5" fill="currentColor" />
+          </svg>
+        </button>
         <div className="app-main">
           <Outlet />
         </div>

@@ -949,12 +949,29 @@ button.flip-card {
 }
 
 .nav-toggle {
+  position: fixed;
+  z-index: 35;
+  top: calc(var(--header-h, 68px) + 12px);
+  left: calc(var(--side-w, 248px) + 8px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   padding: 0;
+  border-radius: 8px;
+}
+
+.app-shell {
+  --side-w: 0px;
+}
+
+.app-shell.nav-open {
+  --side-w: 248px;
+}
+
+.app-shell.is-quiet .nav-toggle {
+  display: none;
 }
 
 button.side-heading {
@@ -1257,11 +1274,10 @@ html[data-theme="dark"] .confirm {
 
 @media (min-width: 801px) {
   .app-shell:not(.nav-open) .sidebar {
-    width: 72px;
-  }
-
-  .app-shell:not(.nav-open) .sidebar nav {
-    display: none;
+    width: 0;
+    padding: 0;
+    border-right-width: 0;
+    overflow: hidden;
   }
 }
 
@@ -1270,13 +1286,15 @@ html[data-theme="dark"] .confirm {
     flex-wrap: wrap;
   }
 
-  .sidebar {
-    width: 72px;
-    padding: 16px;
+  .app-shell.nav-open {
+    --side-w: min(280px, 86vw);
   }
 
-  .sidebar nav {
-    display: none;
+  .sidebar {
+    width: 0;
+    padding: 0;
+    border-right-width: 0;
+    overflow: hidden;
   }
 
   .app-shell.nav-open .sidebar {
@@ -1287,6 +1305,8 @@ html[data-theme="dark"] .confirm {
     left: 0;
     width: min(280px, 86vw);
     height: auto;
+    padding: 16px 16px 40px;
+    border-right: 1px solid #c5ddd3;
     overflow: hidden;
     box-shadow: 8px 0 24px rgb(12 22 18 / 18%);
   }
