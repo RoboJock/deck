@@ -14,7 +14,7 @@ import { isStudyQuiet, subscribeStudyQuiet } from './lib/quiet.ts'
 
 function Shell() {
   const location = useLocation()
-  const [menuOpen, setMenuOpen] = useState(true)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [quiet, setQuiet] = useState(isStudyQuiet())
   const [menuPath, setMenuPath] = useState(location.pathname)
   if (menuPath !== location.pathname) {
