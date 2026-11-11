@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthProvider } from './auth.tsx'
 import { Header } from './components/Header.tsx'
@@ -14,6 +14,7 @@ import { isStudyQuiet, subscribeStudyQuiet } from './lib/quiet.ts'
 
 function Shell() {
   const location = useLocation()
+  const shellRef = useRef<HTMLDivElement>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [quiet, setQuiet] = useState(isStudyQuiet())
   const [menuPath, setMenuPath] = useState(location.pathname)
@@ -23,6 +24,19 @@ function Shell() {
   }
 
   useEffect(() => subscribeStudyQuiet(() => setQuiet(isStudyQuiet())), [])
+
+  useLayoutEffect(() => {
+    const shell = shellRef.current
+    const side = shell?.querySelector('.sidebar')
+    if (!shell || !(side instanceof HTMLElement)) return
+    const apply = () => {
+      shell.style.setProperty('--side-w', `${Math.round(side.getBoundingClientRect().width)}px`)
+    }
+    apply()
+    const observer = new ResizeObserver(apply)
+    observer.observe(side)
+    return () => observer.disconnect()
+  }, [menuOpen])
 
   useLayoutEffect(() => {
     const header = document.querySelector('header')
@@ -41,7 +55,7 @@ function Shell() {
   }, [])
 
   return (
-    <div className={`${menuOpen ? 'app-shell nav-open' : 'app-shell'}${quiet ? ' is-quiet' : ''}`}>
+    <div ref={shellRef} className={`${menuOpen ? 'app-shell nav-open' : 'app-shell'}${quiet ? ' is-quiet' : ''}`}>
       <Header />
       <div className="app-body">
         <Sidebar />

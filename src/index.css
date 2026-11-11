@@ -911,7 +911,8 @@ button.flip-card {
 }
 
 .sidebar {
-  width: 248px;
+  width: max-content;
+  max-width: 220px;
   flex: none;
   display: flex;
   flex-direction: column;
@@ -921,7 +922,7 @@ button.flip-card {
   top: var(--header-h, 54px);
   height: calc(100vh - var(--header-h, 54px));
   overflow: hidden;
-  padding: 16px 16px 40px;
+  padding: 12px 12px 40px;
   background: #f7fbf9;
   border-right: 1px solid #c5ddd3;
   z-index: 20;
@@ -951,10 +952,11 @@ button.flip-card {
 
 .side-link {
   display: block;
-  padding: 7px 10px;
+  padding: 7px 8px;
   border-radius: 8px;
   color: #1b2830;
   text-decoration: none;
+  overflow-wrap: anywhere;
 }
 
 .side-link.active {
@@ -1006,7 +1008,7 @@ button.flip-card {
 }
 
 .app-shell.nav-open {
-  --side-w: 248px;
+  --side-w: 220px;
 }
 
 .app-shell.is-quiet .nav-toggle {
@@ -1358,6 +1360,7 @@ html[data-theme="dark"] .confirm {
     bottom: 0;
     left: 0;
     width: min(280px, 86vw);
+    max-width: none;
     height: auto;
     padding: 16px 16px 40px;
     border-right: 1px solid #c5ddd3;
