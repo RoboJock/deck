@@ -250,8 +250,15 @@ a {
   width: 100%;
 }
 
-.quiet-toggle {
+.study-mode-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   align-self: center;
+}
+
+.study-mode-row button {
   white-space: nowrap;
 }
 

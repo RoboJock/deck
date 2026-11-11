@@ -68,6 +68,7 @@ export function StudyPage({ daily = false }: { daily?: boolean }) {
   const [copied, setCopied] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [quiet, setQuiet] = useState(isStudyQuiet())
+  const [fullscreen, setFullscreen] = useState(false)
   const [undo, setUndo] = useState<{
     cardId: string
     index: number
@@ -318,7 +319,31 @@ export function StudyPage({ daily = false }: { daily?: boolean }) {
 
   useEffect(() => subscribeStudyQuiet(() => setQuiet(isStudyQuiet())), [])
 
-  useEffect(() => () => setStudyQuiet(false), [])
+  useEffect(() => {
+    function onFullscreen() {
+      setFullscreen(document.fullscreenElement != null)
+    }
+    document.addEventListener('fullscreenchange', onFullscreen)
+    return () => {
+      document.removeEventListener('fullscreenchange', onFullscreen)
+      setStudyQuiet(false)
+      if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined)
+    }
+  }, [])
+
+  async function toggleFullscreenStudy() {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen()
+        setStudyQuiet(false)
+        return
+      }
+      await document.documentElement.requestFullscreen()
+      setStudyQuiet(true)
+    } catch {
+      setFullscreen(document.fullscreenElement != null)
+    }
+  }
 
   function showCard(cardId: string) {
     return cards.find((card) => card.id === cardId)
@@ -468,9 +493,14 @@ export function StudyPage({ daily = false }: { daily?: boolean }) {
 
   return (
     <main className="study-screen">
-      <button type="button" className="secondary quiet-toggle" onClick={() => setStudyQuiet(!quiet)}>
-        {quiet ? 'Exit study mode' : 'Study mode'}
-      </button>
+      <div className="study-mode-row">
+        <button type="button" className="secondary" onClick={() => setStudyQuiet(!quiet)}>
+          {quiet ? 'Exit study mode' : 'Study mode'}
+        </button>
+        <button type="button" className="secondary" onClick={() => void toggleFullscreenStudy()}>
+          {fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+        </button>
+      </div>
       {message ? (
         <>
           <h1>Study</h1>
