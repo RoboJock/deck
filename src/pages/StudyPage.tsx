@@ -521,6 +521,8 @@ export function StudyPage({ daily = false }: { daily?: boolean }) {
   }
 
   const card = showCard(queue[index] ?? '')
+  const canCopyDeck =
+    visibility === 'public' && !example && !guest && ownerId !== '' && (!user || user.uid !== ownerId) && cardsReady
   const againIds = roundIds.filter((id) => ratings[id] !== 'got' && showCard(id))
 
   return (
@@ -711,24 +713,26 @@ export function StudyPage({ daily = false }: { daily?: boolean }) {
             </div>
           </div>
           {saveError ? <p className="error">{saveError}</p> : null}
-          {visibility === 'public' ? (
-            <button type="button" className="secondary" onClick={copyShareLink}>
-              {copied ? 'Link copied' : 'Copy link'}
-            </button>
-          ) : null}
         </>
       ) : null}
-      {visibility === 'public' && !example && !guest && ownerId && (!user || user.uid !== ownerId) && cardsReady ? (
-        <div className="study-direction">
-          <button type="button" className="secondary" disabled={copying} onClick={() => void copyPublicDeck()}>
-            {copying ? 'Copying…' : 'Copy this deck'}
+      {visibility === 'public' ? (
+        <div className="study-copy-row">
+          <button type="button" className="secondary" onClick={copyShareLink}>
+            {copied ? 'Link copied' : 'Copy link'}
           </button>
-          <p className="status">
-            {user
-              ? 'The copy is yours to edit.'
-              : 'The copy is yours to edit. Without an account, it stays in this browser and cannot be listed publicly.'}
-          </p>
+          {canCopyDeck ? (
+            <button type="button" className="secondary" disabled={copying} onClick={() => void copyPublicDeck()}>
+              {copying ? 'Copying…' : 'Copy this deck'}
+            </button>
+          ) : null}
         </div>
+      ) : null}
+      {canCopyDeck ? (
+        <p className="status study-copy-note">
+          {user
+            ? 'The copy is yours to edit.'
+            : 'The copy is yours to edit. Without an account, it stays in this browser and cannot be listed publicly.'}
+        </p>
       ) : null}
     </main>
   )

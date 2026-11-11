@@ -225,8 +225,9 @@ a {
 .study-options {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
+  align-self: center;
   gap: 48px;
   margin-top: 8px;
 }
@@ -273,6 +274,21 @@ a {
 
 .study-mode-row button {
   white-space: nowrap;
+}
+
+.study-copy-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-self: center;
+}
+
+.study-copy-note {
+  max-width: 640px;
+  margin: 0;
+  text-align: center;
 }
 
 .app-shell.is-quiet .top,
