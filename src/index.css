@@ -493,6 +493,10 @@ a {
   padding: 0;
 }
 
+.welcome-features {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .home-pick {
   display: flex;
   flex-direction: column;
@@ -941,6 +945,7 @@ button.flip-card {
 @media (max-width: 720px) {
   .home-stage,
   .home-picks,
+  .welcome-features,
   .editor-top,
   .split,
   .composer {

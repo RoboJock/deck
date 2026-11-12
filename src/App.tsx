@@ -6,6 +6,7 @@ import { Sidebar } from './components/Sidebar.tsx'
 import { missingConfig } from './lib/firebase.ts'
 import { SignInPage } from './pages/SignInPage.tsx'
 import { HomePage } from './pages/HomePage.tsx'
+import { CreateDeckPage } from './pages/CreateDeckPage.tsx'
 import { DecksPage } from './pages/DecksPage.tsx'
 import { ExamplesPage } from './pages/ExamplesPage.tsx'
 import { DeckPage } from './pages/DeckPage.tsx'
@@ -97,6 +98,7 @@ function AppRoutes() {
     <Routes>
       <Route element={<Shell />}>
         <Route path="/" element={<HomePage />} />
+        <Route path="/create" element={<CreateDeckPage />} />
         <Route path="/account" element={<SignInPage />} />
         <Route path="/decks" element={<DecksPage />} />
         <Route path="/examples" element={<ExamplesPage />} />

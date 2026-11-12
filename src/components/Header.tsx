@@ -30,6 +30,12 @@ export function Header() {
             Home
           </NavLink>
           <NavLink
+            to="/create"
+            className={({ isActive }) => (isActive ? 'top-link active' : 'top-link')}
+          >
+            Create a deck
+          </NavLink>
+          <NavLink
             to="/decks"
             className={({ isActive }) => (isActive ? 'top-link active' : 'top-link')}
           >
